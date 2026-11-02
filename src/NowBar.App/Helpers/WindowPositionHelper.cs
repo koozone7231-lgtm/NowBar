@@ -10,12 +10,12 @@ namespace NowBar.App.Helpers;
 public static class WindowPositionHelper
 {
     /// <summary>그림자가 잘리지 않도록 캡슐 주변에 두는 투명 여백(DIP).</summary>
-    public const double ShadowMargin = 24;
+    public const double ShadowMargin = 32;
 
     public static Rect ComputeWindowRect(AppSettings s)
     {
-        var width = Math.Max(s.CompactWidth, s.ExpandedWidth) + ShadowMargin * 2;
-        var height = s.TopOffset + Math.Max(s.CapsuleHeight, s.ExpandedHeight) + ShadowMargin;
+        var width = Math.Max(Math.Max(s.CompactWidth, s.ExpandedWidth), AppSettings.SettingsPanelWidth) + ShadowMargin * 2;
+        var height = s.TopOffset + Math.Max(Math.Max(s.CapsuleHeight, s.ExpandedHeight), AppSettings.SettingsPanelHeight) + ShadowMargin;
 
         // 메인 모니터 기준, 해상도와 무관하게 수평 중앙 정렬 (DIP 단위)
         var screenLeft = 0.0;

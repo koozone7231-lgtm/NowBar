@@ -44,6 +44,10 @@ public partial class MainWindow : Window
         _housekeeping = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
         _housekeeping.Tick += (_, _) => Housekeeping();
 
+        // 설정 패널에서 사용하는 확인 창 (이 창을 소유자로 해 항상 NowBar 위에 표시)
+        _vm.ConfirmUnsavedSettings = AskUnsavedSettings;
+        _vm.SettingsPanel.ConfirmPlan = (plan, title) => Views.HooksApprovalWindow.Ask(this, plan, title);
+
         _vm.PropertyChanged += OnViewModelChanged;
         _vm.AI.PropertyChanged += OnAIChanged;
         _settings.PropertyChanged += OnSettingsChanged;
@@ -90,17 +94,30 @@ public partial class MainWindow : Window
         WorkingGlow.Margin = Island.Margin;
         IslandShadow.Margin = Island.Margin;
         TabRow.Height = new GridLength(_settings.CapsuleHeight - 2);
-        DetailHost.Width = _settings.ExpandedWidth - 2;
-        DetailHost.Height = Math.Max(0, _settings.ExpandedHeight - _settings.CapsuleHeight);
         TabsGrid.Width = _settings.ExpandedWidth - 2;
+        UpdateDetailSize();
 
         AnimateIsland(_vm.IsExpanded, animate ? _settings.AnimationMs : 1);
     }
 
+    // 확장 크기: 설정이 열려 있으면 설정 패널 크기(더 넓고 높게), 아니면 일반 확장 크기
+    private double ExpandedTargetWidth =>
+        _vm.IsSettingsOpen ? Math.Max(_settings.ExpandedWidth, AppSettings.SettingsPanelWidth) : _settings.ExpandedWidth;
+
+    private double ExpandedTargetHeight =>
+        _vm.IsSettingsOpen ? Math.Max(_settings.ExpandedHeight, AppSettings.SettingsPanelHeight) : _settings.ExpandedHeight;
+
+    /// <summary>상세 영역은 목표 크기로 고정 배치하고 캡슐 크기 애니메이션으로 잘라 보여준다 (애니메이션 중 레이아웃 흔들림 방지).</summary>
+    private void UpdateDetailSize()
+    {
+        DetailHost.Width = ExpandedTargetWidth - 2;
+        DetailHost.Height = Math.Max(0, ExpandedTargetHeight - _settings.CapsuleHeight);
+    }
+
     private void AnimateIsland(bool expand, int durationMs)
     {
-        var width = expand ? _settings.ExpandedWidth : _settings.CompactWidth;
-        var height = expand ? _settings.ExpandedHeight : _settings.CapsuleHeight;
+        var width = expand ? ExpandedTargetWidth : _settings.CompactWidth;
+        var height = expand ? ExpandedTargetHeight : _settings.CapsuleHeight;
         var compactRadius = Math.Min(_settings.CornerRadius, _settings.CapsuleHeight / 2);
 
         // 애니메이션은 현재 값에서 시작하므로 최초 1회는 크기를 직접 지정 (NaN에서 시작 불가)
@@ -204,7 +221,7 @@ public partial class MainWindow : Window
 
     private void ScheduleCollapse()
     {
-        if (!_vm.IsExpanded || _vm.IsPinned) return;
+        if (!_vm.IsExpanded || _vm.IsPinned || _vm.IsSettingsOpen) return;
         _collapseTimer.Interval = TimeSpan.FromMilliseconds(_settings.CollapseDelayMs);
         _collapseTimer.Stop();
         _collapseTimer.Start();
@@ -224,13 +241,14 @@ public partial class MainWindow : Window
 
     private bool ShouldStayOpen() =>
         _vm.IsPinned
+        || _vm.IsSettingsOpen                // 설정 편집 중에는 마우스가 나가도 닫지 않음
         || Mouse.Captured is not null        // 슬라이더 드래그, 열린 메뉴
         || Island.ContextMenu?.IsOpen == true
         || IsCursorOverIsland();
 
     private void HoverWatchdog_Tick(object? sender, EventArgs e)
     {
-        if (!_vm.IsExpanded || _vm.IsPinned)
+        if (!_vm.IsExpanded || _vm.IsPinned || _vm.IsSettingsOpen)
         {
             _hoverWatchdog.Stop();
             return;
@@ -246,8 +264,8 @@ public partial class MainWindow : Window
         {
             // 확장 중에는 애니메이션 진행 중인 현재 크기가 아니라 최종 확장 크기로 판단한다.
             // (커서를 빠르게 아래로 내리면 패널이 다 커지기 전에 '밖'으로 판정되어 닫히는 문제 방지)
-            var width = _vm.IsExpanded ? Math.Max(Island.ActualWidth, _settings.ExpandedWidth) : Island.ActualWidth;
-            var height = _vm.IsExpanded ? Math.Max(Island.ActualHeight, _settings.ExpandedHeight) : Island.ActualHeight;
+            var width = _vm.IsExpanded ? Math.Max(Island.ActualWidth, ExpandedTargetWidth) : Island.ActualWidth;
+            var height = _vm.IsExpanded ? Math.Max(Island.ActualHeight, ExpandedTargetHeight) : Island.ActualHeight;
             var center = Island.ActualWidth / 2;
             var topLeft = Island.PointToScreen(new Point(center - width / 2, 0));
             var bottomRight = Island.PointToScreen(new Point(center + width / 2, height));
@@ -263,7 +281,14 @@ public partial class MainWindow : Window
     {
         if (e.Key == Key.Escape)
         {
-            _vm.CollapseAndUnpin();
+            // 설정이 열려 있으면 설정만 닫고(저장 확인 포함), 아니면 고정 해제 + 축소
+            if (_vm.IsSettingsOpen) _vm.TryCloseSettings();
+            else _vm.CollapseAndUnpin();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.S && Keyboard.Modifiers == ModifierKeys.Control && _vm.IsSettingsOpen)
+        {
+            if (_vm.SettingsPanel.SaveCommand.CanExecute(null)) _vm.SettingsPanel.SaveCommand.Execute(null);
             e.Handled = true;
         }
     }
@@ -288,6 +313,20 @@ public partial class MainWindow : Window
             case nameof(MainViewModel.IsPinned):
                 if (_vm.IsPinned) _collapseTimer.Stop();
                 else if (!IsCursorOverIsland()) ScheduleCollapse();
+                break;
+            case nameof(MainViewModel.IsSettingsOpen):
+                // 설정 열기/닫기: 패널을 설정 크기 ↔ 일반 확장 크기로 부드럽게 변경
+                UpdateDetailSize();
+                if (_vm.IsExpanded) AnimateIsland(true, _settings.AnimationMs);
+                if (_vm.IsSettingsOpen)
+                {
+                    _collapseTimer.Stop();
+                    Activate(); // 입력칸에 바로 입력할 수 있도록 (사용자가 설정을 연 경우에만)
+                }
+                else if (!_vm.IsPinned && !IsCursorOverIsland())
+                {
+                    ScheduleCollapse();
+                }
                 break;
         }
     }
@@ -328,7 +367,7 @@ public partial class MainWindow : Window
     {
         if (_hwnd == IntPtr.Zero) return;
 
-        _hiddenForFullscreen = _settings.HideInFullscreen && !_vm.IsPinned && IsFullscreenAppActive();
+        _hiddenForFullscreen = _settings.HideInFullscreen && !_vm.IsPinned && !_vm.IsSettingsOpen && IsFullscreenAppActive();
         UpdateVisibility();
 
         // 다른 최상위 창(작업 표시줄 등)에 실제로 가려졌을 때만 최상위 재지정 (포커스는 가져오지 않음).
@@ -376,6 +415,19 @@ public partial class MainWindow : Window
         {
             return false;
         }
+    }
+
+    private bool? AskUnsavedSettings()
+    {
+        var answer = MessageBox.Show(this,
+            "저장하지 않은 설정 변경 사항이 있습니다.\n저장하시겠습니까?\n\n[아니요]를 누르면 설정을 열기 전 상태로 되돌립니다.",
+            "NowBar 설정", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+        return answer switch
+        {
+            MessageBoxResult.Yes => true,
+            MessageBoxResult.No => false,
+            _ => null,
+        };
     }
 
     // ── 메뉴 ─────────────────────────────────────────────

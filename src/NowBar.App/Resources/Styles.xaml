@@ -1,30 +1,41 @@
+<!--
+  NowBar 스타일 — Spotify 영감 디자인 시스템
+  · 거의 검정에 가까운 단계별 표면 (#121212 → #181818 → #1f1f1f)
+  · 강조색은 단 하나(기본 #1ed760)이며 활성 상태·재생·주요 동작에만 사용
+  · 모든 버튼은 알약(pill) 모양, 재생 버튼은 원형
+  · 굵기는 Bold(700) / Regular(400) 이분법, 크기는 10~24px 범위의 촘촘한 타이포
+-->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib"
                     xmlns:h="clr-namespace:NowBar.App.Helpers">
 
-  <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI, Malgun Gothic</FontFamily>
+  <!-- Circular(독점 폰트)의 공식 대체 스택 + 한글 -->
+  <FontFamily x:Key="UiFont">Helvetica Neue, Arial, Malgun Gothic</FontFamily>
 
   <!-- 기본(다크) 팔레트. 실행 시 ThemeService가 설정(테마/투명도/강조색)에 맞게 덮어쓴다. -->
-  <SolidColorBrush x:Key="Brush.Island" Color="#F015171C"/>
-  <SolidColorBrush x:Key="Brush.Window" Color="#15171C"/>
-  <SolidColorBrush x:Key="Brush.Card" Color="#22252D"/>
-  <SolidColorBrush x:Key="Brush.Selected" Color="#2A2E38"/>
-  <SolidColorBrush x:Key="Brush.Border" Color="#363A45"/>
-  <SolidColorBrush x:Key="Brush.Divider" Color="#3A3E4A"/>
-  <SolidColorBrush x:Key="Brush.Text" Color="#F2F3F7"/>
-  <SolidColorBrush x:Key="Brush.SubText" Color="#969BA8"/>
-  <SolidColorBrush x:Key="Brush.Weather" Color="#F4C66A"/>
-  <SolidColorBrush x:Key="Brush.Music" Color="#9EB4FF"/>
-  <SolidColorBrush x:Key="Brush.AI" Color="#BCA5FF"/>
-  <SolidColorBrush x:Key="Brush.Accent" Color="#9EB4FF"/>
-  <SolidColorBrush x:Key="Brush.OnAccent" Color="#15171C"/>
-  <SolidColorBrush x:Key="Brush.Hover" Color="#14FFFFFF"/>
-  <SolidColorBrush x:Key="Brush.Pressed" Color="#24FFFFFF"/>
-  <SolidColorBrush x:Key="Brush.Track" Color="#3A3E4A"/>
-  <SolidColorBrush x:Key="Brush.Success" Color="#6FD39A"/>
-  <SolidColorBrush x:Key="Brush.Warning" Color="#F4C66A"/>
-  <SolidColorBrush x:Key="Brush.Danger" Color="#FF8A8A"/>
+  <SolidColorBrush x:Key="Brush.Island" Color="#F5121212"/>
+  <SolidColorBrush x:Key="Brush.Window" Color="#121212"/>
+  <SolidColorBrush x:Key="Brush.Card" Color="#181818"/>
+  <SolidColorBrush x:Key="Brush.Surface" Color="#1F1F1F"/>
+  <SolidColorBrush x:Key="Brush.Selected" Color="#2A2A2A"/>
+  <SolidColorBrush x:Key="Brush.Border" Color="#2A2A2A"/>
+  <SolidColorBrush x:Key="Brush.Outline" Color="#7C7C7C"/>
+  <SolidColorBrush x:Key="Brush.Divider" Color="#2A2A2A"/>
+  <SolidColorBrush x:Key="Brush.Text" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="Brush.SubText" Color="#B3B3B3"/>
+  <SolidColorBrush x:Key="Brush.Weather" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="Brush.Music" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="Brush.AI" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="Brush.Accent" Color="#1ED760"/>
+  <SolidColorBrush x:Key="Brush.OnAccent" Color="#000000"/>
+  <SolidColorBrush x:Key="Brush.Hover" Color="#12FFFFFF"/>
+  <SolidColorBrush x:Key="Brush.Pressed" Color="#22FFFFFF"/>
+  <SolidColorBrush x:Key="Brush.Track" Color="#4D4D4D"/>
+  <SolidColorBrush x:Key="Brush.Success" Color="#1ED760"/>
+  <SolidColorBrush x:Key="Brush.Warning" Color="#FFA42B"/>
+  <SolidColorBrush x:Key="Brush.Danger" Color="#F3727F"/>
+  <SolidColorBrush x:Key="Brush.Info" Color="#539DF5"/>
 
   <h:BoolToVisibilityConverter x:Key="BoolToVis"/>
   <h:BoolToVisibilityConverter x:Key="InvBoolToVis" Invert="True"/>
@@ -42,22 +53,22 @@
   </Style>
   <Style x:Key="Text.Strong" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
     <Setter Property="FontSize" Value="14"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="FontWeight" Value="Bold"/>
   </Style>
   <Style x:Key="Text.Sub" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
     <Setter Property="FontSize" Value="12"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
   </Style>
   <Style x:Key="Text.Caption" TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
-    <Setter Property="FontSize" Value="11.5"/>
+    <Setter Property="FontSize" Value="11"/>
   </Style>
   <Style x:Key="Text.Big" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
-    <Setter Property="FontSize" Value="40"/>
-    <Setter Property="FontWeight" Value="Light"/>
+    <Setter Property="FontSize" Value="36"/>
+    <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="TextTrimming" Value="None"/>
   </Style>
   <Style x:Key="Text.TabName" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
-    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="TextTrimming" Value="None"/>
   </Style>
   <Style x:Key="Text.TabStatus" TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
@@ -65,11 +76,12 @@
   </Style>
   <Style x:Key="Text.Section" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
     <Setter Property="FontSize" Value="16"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
-    <Setter Property="Margin" Value="0,18,0,8"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Margin" Value="0,14,0,8"/>
   </Style>
 
   <!-- ── 버튼 ─────────────────────────────────────────── -->
+  <!-- 아이콘/텍스트만 있는 투명 버튼 (호버 시 원형/알약 배경) -->
   <Style x:Key="Button.Bare" TargetType="Button">
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
@@ -81,7 +93,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="999" Padding="{TemplateBinding Padding}">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>
@@ -100,45 +112,48 @@
     </Setter>
   </Style>
 
+  <!-- 원형 아이콘 버튼 -->
   <Style x:Key="Button.Icon" TargetType="Button" BasedOn="{StaticResource Button.Bare}">
     <Setter Property="Width" Value="30"/>
     <Setter Property="Height" Value="30"/>
   </Style>
 
   <Style x:Key="Button.Media" TargetType="Button" BasedOn="{StaticResource Button.Bare}">
-    <Setter Property="Width" Value="40"/>
+    <Setter Property="Width" Value="36"/>
     <Setter Property="Height" Value="36"/>
+    <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
+    <Style.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+      </Trigger>
+    </Style.Triggers>
   </Style>
 
-  <Style x:Key="Button.Pill" TargetType="Button">
-    <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
-    <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="Padding" Value="12,6"/>
-    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
-    <Setter Property="FontSize" Value="13"/>
+  <!-- 원형 재생 버튼: 강조색 배경 + 검정 아이콘, 호버 시 살짝 커짐 -->
+  <Style x:Key="Button.Play" TargetType="Button">
+    <Setter Property="Width" Value="40"/>
+    <Setter Property="Height" Value="40"/>
     <Setter Property="Cursor" Value="Hand"/>
-    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Focusable" Value="False"/>
+    <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="9">
-            <Grid>
-              <Border x:Name="Overlay" Background="Transparent" CornerRadius="8"/>
-              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
-            </Grid>
-          </Border>
+          <Grid>
+            <Ellipse x:Name="Circle" Fill="{DynamicResource Brush.Accent}" RenderTransformOrigin="0.5,0.5">
+              
+            </Ellipse>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Overlay" Property="Background" Value="{DynamicResource Brush.Hover}"/>
+              <Setter TargetName="Circle" Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="1.06" ScaleY="1.06"/></Setter.Value></Setter>
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-              <Setter TargetName="Overlay" Property="Background" Value="{DynamicResource Brush.Pressed}"/>
+              <Setter TargetName="Circle" Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.96" ScaleY="0.96"/></Setter.Value></Setter>
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
-              <Setter Property="Opacity" Value="0.45"/>
+              <Setter TargetName="Circle" Property="Fill" Value="{DynamicResource Brush.Track}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -146,28 +161,75 @@
     </Setter>
   </Style>
 
+  <!-- 어두운 알약 버튼 (보조 동작) -->
+  <Style x:Key="Button.Pill" TargetType="Button">
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="14,6"/>
+    <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999" RenderTransformOrigin="0.5,0.5">
+            
+            <Grid>
+              <Border x:Name="Overlay" Background="Transparent" CornerRadius="999"/>
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+            </Grid>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Overlay" Property="Background" Value="{DynamicResource Brush.Hover}"/>
+              <Setter TargetName="Bd" Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="1.03" ScaleY="1.03"/></Setter.Value></Setter>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Overlay" Property="Background" Value="{DynamicResource Brush.Pressed}"/>
+              <Setter TargetName="Bd" Property="RenderTransform"><Setter.Value><ScaleTransform ScaleX="0.98" ScaleY="0.98"/></Setter.Value></Setter>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- 테두리만 있는 알약 버튼 -->
+  <Style x:Key="Button.Outline" TargetType="Button" BasedOn="{StaticResource Button.Pill}">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Outline}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+  </Style>
+
+  <!-- 주요 동작: 강조색 알약 + 검정 글자 -->
   <Style x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Pill}">
     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}"/>
-    <Setter Property="BorderThickness" Value="0"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
   </Style>
 
-  <!-- 상단 탭 버튼: Tag=true 이면 선택 상태. BorderBrush = 탭 강조색(하단 표시줄) -->
+  <!-- 상단 탭: Tag=true 이면 선택 (흰색 굵은 글자 + 강조색 표시줄), 아니면 은색 -->
   <Style x:Key="Button.Tab" TargetType="Button">
     <Setter Property="Background" Value="Transparent"/>
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd" Background="Transparent" CornerRadius="14" Margin="2,6" ClipToBounds="True">
+          <Border x:Name="Bd" Background="Transparent" CornerRadius="999" Margin="2,7">
             <Grid>
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,0"/>
-              <Border x:Name="Indicator" Height="2" Width="16" CornerRadius="1" VerticalAlignment="Bottom"
-                      Margin="0,0,0,2" Background="{TemplateBinding BorderBrush}" Opacity="0"/>
+              <Border x:Name="Indicator" Height="3" Width="16" CornerRadius="2" VerticalAlignment="Bottom"
+                      Margin="0,0,0,1" Background="{DynamicResource Brush.Accent}" Opacity="0"/>
             </Grid>
           </Border>
           <ControlTemplate.Triggers>
@@ -185,30 +247,30 @@
     </Setter>
   </Style>
 
-  <!-- 세션 선택용 작은 칩 버튼: Tag=true 이면 선택 -->
+  <!-- 필터 칩 (세션 선택·설정 섹션): Tag=true 이면 강조색 배경 + 검정 글자 -->
   <Style x:Key="Button.Chip" TargetType="Button">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
     <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
     <Setter Property="FontSize" Value="12"/>
+    <Setter Property="FontWeight" Value="Bold"/>
     <Setter Property="Cursor" Value="Hand"/>
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="Margin" Value="0,0,6,0"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd" Background="Transparent" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1"
-                  CornerRadius="10" Padding="9,2">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="999" Padding="12,4">
             <ContentPresenter VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Hover}"/>
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Selected}"/>
             </Trigger>
             <Trigger Property="Tag">
               <Trigger.Value><sys:Boolean>True</sys:Boolean></Trigger.Value>
-              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Selected}"/>
-              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
-              <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Accent}"/>
+              <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}"/>
             </Trigger>
           </ControlTemplate.Triggers>
         </ControlTemplate>
@@ -218,13 +280,13 @@
 
   <!-- ── 카드 ─────────────────────────────────────────── -->
   <Style x:Key="Card.Stat" TargetType="Border">
-    <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
-    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
+    <Setter Property="CornerRadius" Value="8"/>
     <Setter Property="Padding" Value="10,7"/>
     <Setter Property="Margin" Value="3,0"/>
   </Style>
 
-  <!-- ── 슬라이더 ─────────────────────────────────────── -->
+  <!-- ── 슬라이더: 흰색 진행 막대, 호버 시 강조색 + 원형 손잡이 표시 ── -->
   <Style x:Key="Repeat.Fill" TargetType="RepeatButton">
     <Setter Property="Focusable" Value="False"/>
     <Setter Property="IsTabStop" Value="False"/>
@@ -232,7 +294,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="RepeatButton">
           <Grid Background="Transparent">
-            <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+            <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" VerticalAlignment="Center"/>
           </Grid>
         </ControlTemplate>
       </Setter.Value>
@@ -254,13 +316,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Thumb">
-          <Ellipse x:Name="Dot" Width="12" Height="12" Fill="{DynamicResource Brush.Text}"/>
-          <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-              <Setter TargetName="Dot" Property="Width" Value="14"/>
-              <Setter TargetName="Dot" Property="Height" Value="14"/>
-            </Trigger>
-          </ControlTemplate.Triggers>
+          <Ellipse Width="12" Height="12" Fill="{DynamicResource Brush.Text}"/>
         </ControlTemplate>
       </Setter.Value>
     </Setter>
@@ -276,17 +332,22 @@
             <Border Height="4" CornerRadius="2" Background="{DynamicResource Brush.Track}" VerticalAlignment="Center"/>
             <Track x:Name="PART_Track">
               <Track.DecreaseRepeatButton>
-                <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource Repeat.Fill}"/>
+                <RepeatButton x:Name="Fill" Command="Slider.DecreaseLarge" Style="{StaticResource Repeat.Fill}"
+                              Background="{DynamicResource Brush.Text}"/>
               </Track.DecreaseRepeatButton>
               <Track.IncreaseRepeatButton>
                 <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource Repeat.Empty}"/>
               </Track.IncreaseRepeatButton>
               <Track.Thumb>
-                <Thumb Style="{StaticResource Slider.Thumb}"/>
+                <Thumb x:Name="Knob" Style="{StaticResource Slider.Thumb}" Opacity="0"/>
               </Track.Thumb>
             </Track>
           </Grid>
           <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Fill" Property="Background" Value="{DynamicResource Brush.Accent}"/>
+              <Setter TargetName="Knob" Property="Opacity" Value="1"/>
+            </Trigger>
             <Trigger Property="IsEnabled" Value="False">
               <Setter Property="Opacity" Value="0.4"/>
             </Trigger>
@@ -296,30 +357,170 @@
     </Setter>
   </Style>
 
-  <!-- ── 설정 창 입력 컨트롤 ───────────────────────────── -->
+  <!-- ── 입력 컨트롤 ──────────────────────────────────── -->
+  <!-- 알약 입력칸: 어두운 표면 + 안쪽 회색 테두리, 포커스 시 흰 테두리 -->
   <Style x:Key="Input.Text" TargetType="TextBox">
-    <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
+    <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
     <Setter Property="CaretBrush" Value="{DynamicResource Brush.Text}"/>
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
+    <Setter Property="SelectionBrush" Value="{DynamicResource Brush.Accent}"/>
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Track}"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="Padding" Value="8,5"/>
+    <Setter Property="Padding" Value="12,0"/>
+    <Setter Property="Height" Value="32"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
     <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
     <Setter Property="FontSize" Value="13"/>
     <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999" Padding="{TemplateBinding Padding}">
+            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center"
+                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Outline}"/>
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Text}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
+
+  <!-- 체크박스 → 토글 스위치 (켜짐: 강조색 트랙) -->
   <Style x:Key="Input.Check" TargetType="CheckBox">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
     <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
     <Setter Property="FontSize" Value="13"/>
-    <Setter Property="Margin" Value="0,5"/>
-    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Margin" Value="0,4"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="CheckBox">
+          <Grid Background="Transparent">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <ContentPresenter VerticalAlignment="Center" Margin="0,0,12,0" RecognizesAccessKey="True">
+              <ContentPresenter.Resources>
+                <Style TargetType="TextBlock">
+                  <Setter Property="TextWrapping" Value="Wrap"/>
+                </Style>
+              </ContentPresenter.Resources>
+            </ContentPresenter>
+            <Border x:Name="Track" Grid.Column="1" Width="36" Height="20" CornerRadius="10" Background="{DynamicResource Brush.Track}">
+              <Ellipse x:Name="Knob" Width="14" Height="14" Fill="{DynamicResource Brush.Text}" HorizontalAlignment="Left" Margin="3,0"/>
+            </Border>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Track" Property="Background" Value="{DynamicResource Brush.Accent}"/>
+              <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right"/>
+              <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource Brush.OnAccent}"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Track" Property="Opacity" Value="0.9"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.4"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
+
+  <!-- 라디오 버튼 → 선택형 칩 (선택: 강조색 배경 + 검정 글자) -->
   <Style x:Key="Input.Radio" TargetType="RadioButton">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
     <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
-    <Setter Property="FontSize" Value="13"/>
-    <Setter Property="Margin" Value="0,0,16,0"/>
-    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="FontSize" Value="12.5"/>
+    <Setter Property="FontWeight" Value="Bold"/>
+    <Setter Property="Margin" Value="0,0,6,0"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="Bd" Background="{DynamicResource Brush.Surface}" CornerRadius="999" Padding="12,5">
+            <ContentPresenter VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Selected}"/>
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Accent}"/>
+              <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- 얇은 원형 스크롤바 (전역 기본) -->
+  <Style TargetType="ScrollBar">
+    <Setter Property="Width" Value="8"/>
+    <Setter Property="MinWidth" Value="8"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ScrollBar">
+          <Track x:Name="PART_Track" IsDirectionReversed="True">
+            <Track.Thumb>
+              <Thumb>
+                <Thumb.Template>
+                  <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="T" CornerRadius="4" Background="{DynamicResource Brush.Track}" Margin="1,0"/>
+                    <ControlTemplate.Triggers>
+                      <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="T" Property="Background" Value="{DynamicResource Brush.Outline}"/>
+                      </Trigger>
+                    </ControlTemplate.Triggers>
+                  </ControlTemplate>
+                </Thumb.Template>
+              </Thumb>
+            </Track.Thumb>
+          </Track>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="Orientation" Value="Horizontal">
+        <Setter Property="Visibility" Value="Collapsed"/>
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
+  <!-- 목록 항목 (지역 검색 결과) -->
+  <Style x:Key="List.Item" TargetType="ListBoxItem">
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ListBoxItem">
+          <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="10,5" Margin="0,1">
+            <ContentPresenter/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Hover}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Selected}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
   </Style>
 </ResourceDictionary>

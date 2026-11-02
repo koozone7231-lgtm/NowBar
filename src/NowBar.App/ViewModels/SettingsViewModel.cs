@@ -13,6 +13,9 @@ using NowBar.App.Services;
 
 namespace NowBar.App.ViewModels;
 
+/// <summary>확장 패널 안 설정 화면의 섹션.</summary>
+public enum SettingsSection { General, Design, Weather, Music, AI }
+
 public partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly WeatherService _weather;
@@ -64,6 +67,36 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         Settings.PropertyChanged += OnSettingsChanged;
         _settingsService.UnsavedStateChanged += OnUnsavedStateChanged;
         UpdateStartupStatus();
+    }
+
+    // ── 섹션 / 열기·닫기 ─────────────────────────────────
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsGeneralSection), nameof(IsDesignSection), nameof(IsWeatherSection),
+        nameof(IsMusicSection), nameof(IsAISection))]
+    private SettingsSection _section = SettingsSection.General;
+
+    public bool IsGeneralSection => Section == SettingsSection.General;
+    public bool IsDesignSection => Section == SettingsSection.Design;
+    public bool IsWeatherSection => Section == SettingsSection.Weather;
+    public bool IsMusicSection => Section == SettingsSection.Music;
+    public bool IsAISection => Section == SettingsSection.AI;
+
+    [RelayCommand]
+    private void SelectSection(SettingsSection section) => Section = section;
+
+    /// <summary>패널의 ✕ 버튼. 실제 닫기(저장 확인 포함)는 MainViewModel이 처리한다.</summary>
+    public event EventHandler? CloseRequested;
+
+    [RelayCommand]
+    private void Close() => CloseRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>설정 패널이 열릴 때마다 호출: 상태 문구 초기화.</summary>
+    public void OnOpened()
+    {
+        LastSavedAt = null;
+        HasUnsavedChanges = false;
+        UpdateStartupStatus();
+        HookPortText = Settings.HookPort.ToString();
     }
 
     // ── 저장 / 되돌리기 ──────────────────────────────────
@@ -158,7 +191,7 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         Settings.CapsuleHeight = 48;
         Settings.ExpandedWidth = 480;
         Settings.ExpandedHeight = 270;
-        Settings.CornerRadius = 24;
+        Settings.CornerRadius = 20;
         Settings.AnimationMs = 200;
         Settings.CollapseDelayMs = 500;
     }

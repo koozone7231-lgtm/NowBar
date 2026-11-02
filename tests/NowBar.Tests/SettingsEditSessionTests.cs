@@ -49,7 +49,7 @@ public sealed class SettingsEditSessionTests : IDisposable
         s.Location = new GeoLocation("Busan", null, null, 35.1, 129.0, null);
         svc.RevertEdit();
 
-        Assert.Equal(24, s.CornerRadius);
+        Assert.Equal(20, s.CornerRadius);
         Assert.Null(s.Location);
         Assert.False(svc.HasUnsavedChanges);
     }

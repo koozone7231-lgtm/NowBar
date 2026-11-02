@@ -22,7 +22,6 @@ public partial class App : Application
     private TrayIconService? _tray;
     private MainViewModel? _main;
     private MainWindow? _window;
-    private SettingsWindow? _settingsWindow;
     private bool _exiting;
     private bool _syncingStartup;
 
@@ -81,11 +80,12 @@ public partial class App : Application
             _hookServer = new ClaudeHookServer(() => settings.HookToken);
             _hooksSetup = new ClaudeHooksSetupService();
 
-            var weather = new WeatherViewModel(_weatherService, settings, OpenSettings);
+            // 탭의 "설정 열기" 버튼은 해당 섹션을 바로 연다
+            var weather = new WeatherViewModel(_weatherService, settings, () => OpenSettings(SettingsSection.Weather));
             var music = new MusicViewModel(_mediaService, settings);
-            var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, OpenSettings);
-            _main = new MainViewModel(settings, weather, music, ai);
-            _main.OpenSettingsRequested += (_, _) => OpenSettings();
+            var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
+            var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService);
+            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel);
 
             ApplyCommandLine(e.Args, _main);
 
@@ -95,7 +95,7 @@ public partial class App : Application
             _tray = new TrayIconService(
                 togglePinnedExpand: () => _main.IsPinned = !_main.IsPinned,
                 toggleVisible: ToggleVisible,
-                openSettings: OpenSettings,
+                openSettings: () => OpenSettings(),
                 exit: ExitApp);
 
             SystemEvents.PowerModeChanged += OnPowerModeChanged;
@@ -144,27 +144,13 @@ public partial class App : Application
         catch (Exception ex) { Logger.Error($"{name} 실패", ex); }
     }
 
-    public void OpenSettings()
+    /// <summary>NowBar 패널을 키워 그 안에서 설정을 연다 (별도 창 없음).</summary>
+    public void OpenSettings(SettingsSection? section = null)
     {
-        if (_main is null || _settingsService is null) return;
-        if (_settingsWindow is { IsLoaded: true })
-        {
-            _settingsWindow.Activate();
-            return;
-        }
-        // 설정 창이 열려 있는 동안은 [저장]할 때만 파일에 기록 (편집 세션)
-        _settingsService.BeginEdit();
-        var vm = new SettingsViewModel(_settingsService, _main.AI, _weatherService!, _hookServer!, _hooksSetup!, _startupService!);
-        _settingsWindow = new SettingsWindow(vm);
-        _settingsWindow.Closed += (_, _) =>
-        {
-            // 창의 Closing에서 저장/되돌리기를 이미 결정했으므로 남은 변경은 없다
-            _settingsService.EndEdit(save: false);
-            vm.Dispose();
-            _settingsWindow = null;
-        };
-        _settingsWindow.Show();
-        _settingsWindow.Activate();
+        if (_main is null || _window is null) return;
+        if (_window.UserHidden) ToggleVisible();
+        if (section is { } s) _main.SettingsPanel.Section = s;
+        _main.ShowSettings();
     }
 
     private void ToggleVisible()
@@ -177,11 +163,13 @@ public partial class App : Application
     public async void ExitApp()
     {
         if (_exiting) return;
+        // 저장하지 않은 설정이 있으면 먼저 물어보고, 취소하면 종료하지 않는다
+        if (_main is not null && !_main.TryCloseSettings()) return;
         _exiting = true;
         try
         {
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
-            _settingsWindow?.Close();
+            _main?.SettingsPanel.Dispose();
             _window?.Close();
             _main?.Weather.Dispose();
             _main?.Music.Dispose();
@@ -244,7 +232,10 @@ public partial class App : Application
         {
             var registered = _startupService.GetRegisteredCommand();
             settings.StartWithWindows = registered is not null;
-            if (registered is not null && registered != StartupService.BuildCommand(StartupService.CurrentExePath))
+            // 설치 위치가 바뀌었으면 경로를 갱신한다. 단, 별도 데이터 폴더로 띄운 개발/테스트 실행은 실제 등록 경로를 건드리지 않는다.
+            var isIsolatedInstance = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("NOWBAR_DATA_DIR"));
+            if (registered is not null && !isIsolatedInstance
+                && registered != StartupService.BuildCommand(StartupService.CurrentExePath))
                 _startupService.SetEnabled(true);
         }
         catch (Exception ex)

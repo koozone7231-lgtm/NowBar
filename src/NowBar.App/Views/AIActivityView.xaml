@@ -6,22 +6,22 @@
   <UserControl.Resources>
     <!-- 상태별 색상 -->
     <Style x:Key="StateBadge" TargetType="Border">
-      <Setter Property="CornerRadius" Value="9"/>
+      <Setter Property="CornerRadius" Value="999"/>
       <Setter Property="Padding" Value="9,2"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.SubText}"/>
       <Style.Triggers>
         <DataTrigger Binding="{Binding State}" Value="{x:Static m:ClaudeTaskState.Working}">
-          <Setter Property="BorderBrush" Value="{DynamicResource Brush.AI}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
         </DataTrigger>
         <DataTrigger Binding="{Binding State}" Value="{x:Static m:ClaudeTaskState.ToolRunning}">
-          <Setter Property="BorderBrush" Value="{DynamicResource Brush.AI}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
         </DataTrigger>
         <DataTrigger Binding="{Binding State}" Value="{x:Static m:ClaudeTaskState.Waiting}">
           <Setter Property="BorderBrush" Value="{DynamicResource Brush.Warning}"/>
         </DataTrigger>
         <DataTrigger Binding="{Binding State}" Value="{x:Static m:ClaudeTaskState.Completed}">
-          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Success}"/>
+          <Setter Property="BorderBrush" Value="{DynamicResource Brush.Info}"/>
         </DataTrigger>
         <DataTrigger Binding="{Binding State}" Value="{x:Static m:ClaudeTaskState.Error}">
           <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}"/>
@@ -115,7 +115,7 @@
 
       <!-- 최근 활동 -->
       <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
-        <c:Icon Kind="Activity" Width="14" Height="14" Foreground="{DynamicResource Brush.AI}" VerticalAlignment="Center"/>
+        <c:Icon Kind="Activity" Width="14" Height="14" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
         <TextBlock Text="{Binding ActivityText}" Style="{StaticResource Text.Base}" Margin="7,0,0,0" MaxWidth="400"/>
       </StackPanel>
       <TextBlock Grid.Row="2" Text="{Binding ErrorText}" Style="{StaticResource Text.Sub}" Foreground="{DynamicResource Brush.Danger}"

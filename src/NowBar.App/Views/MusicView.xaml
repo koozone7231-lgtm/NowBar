@@ -51,11 +51,11 @@
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Border Width="60" Height="60" CornerRadius="10" Background="{DynamicResource Brush.Card}" Margin="0,0,14,0">
+      <Border Width="60" Height="60" CornerRadius="6" Background="{DynamicResource Brush.Surface}" Margin="0,0,14,0">
         <Grid>
           <c:Icon Kind="Music" Width="24" Height="24" Foreground="{DynamicResource Brush.Music}"
                   Visibility="{Binding ShowThumbnail, Converter={StaticResource InvBoolToVis}}"/>
-          <Border CornerRadius="10" Visibility="{Binding ShowThumbnail, Converter={StaticResource BoolToVis}}">
+          <Border CornerRadius="6" Visibility="{Binding ShowThumbnail, Converter={StaticResource BoolToVis}}">
             <Border.Background>
               <ImageBrush ImageSource="{Binding Thumbnail}" Stretch="UniformToFill"/>
             </Border.Background>
@@ -91,14 +91,14 @@
     <Grid Grid.Row="4" Margin="0,2,0,0" Visibility="{Binding Message, Converter={StaticResource InvNullToVis}}">
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
         <Button Style="{StaticResource Button.Media}" Command="{Binding PreviousCommand}" IsEnabled="{Binding CanPrevious}" ToolTip="이전 곡" AutomationProperties.Name="이전 곡">
-          <c:Icon Kind="SkipBack" Width="18" Height="18" Filled="True" Foreground="{DynamicResource Brush.Text}"/>
+          <c:Icon Kind="SkipBack" Width="18" Height="18" Filled="True"/>
         </Button>
-        <Button Style="{StaticResource Button.Media}" Width="48" Margin="10,0" Command="{Binding PlayPauseCommand}"
+        <Button Style="{StaticResource Button.Play}" Margin="12,0" Command="{Binding PlayPauseCommand}"
                 IsEnabled="{Binding CanPlayPause}" ToolTip="재생 / 일시정지" AutomationProperties.Name="재생 / 일시정지">
-          <c:Icon Kind="{Binding PlayPauseIcon}" Width="22" Height="22" Filled="True" Foreground="{DynamicResource Brush.Text}"/>
+          <c:Icon Kind="{Binding PlayPauseIcon}" Width="18" Height="18" Filled="True"/>
         </Button>
         <Button Style="{StaticResource Button.Media}" Command="{Binding NextCommand}" IsEnabled="{Binding CanNext}" ToolTip="다음 곡" AutomationProperties.Name="다음 곡">
-          <c:Icon Kind="SkipForward" Width="18" Height="18" Filled="True" Foreground="{DynamicResource Brush.Text}"/>
+          <c:Icon Kind="SkipForward" Width="18" Height="18" Filled="True"/>
         </Button>
       </StackPanel>
       <Button Style="{StaticResource Button.Icon}" HorizontalAlignment="Right" Command="{Binding OpenSourceAppCommand}"

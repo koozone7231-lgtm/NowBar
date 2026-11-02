@@ -29,8 +29,8 @@ public partial class AppSettings : ObservableObject
     // ── 디자인 ────────────────────────────────────────────
     [ObservableProperty] private AppTheme _theme = AppTheme.Dark;
     [ObservableProperty] private double _backgroundOpacity = 0.94;
-    [ObservableProperty] private string _accentColor = "#9EB4FF";
-    [ObservableProperty] private double _cornerRadius = 24;
+    [ObservableProperty] private string _accentColor = "#1ED760";
+    [ObservableProperty] private double _cornerRadius = 20;
     [ObservableProperty] private int _animationMs = 200;
 
     // ── 날씨 ──────────────────────────────────────────────
@@ -55,6 +55,9 @@ public partial class AppSettings : ObservableObject
     /// <summary>Claude 작업 중일 때 캡슐 테두리에 은은하게 깜빡이는 글로우 표시.</summary>
     [ObservableProperty] private bool _showWorkingGlow = true;
 
+    /// <summary>디자인 기본값 마이그레이션 버전 (2 = Spotify 영감 디자인).</summary>
+    [ObservableProperty] private int _designVersion;
+
     // ── 상태 ──────────────────────────────────────────────
     [ObservableProperty] private NowBarTab _lastSelectedTab = NowBarTab.Weather;
 
@@ -62,6 +65,22 @@ public partial class AppSettings : ObservableObject
     public const double MinCapsuleHeight = 40, MaxCapsuleHeight = 64;
     public const double MinExpandedWidth = 440, MaxExpandedWidth = 600;
     public const double MinExpandedHeight = 220, MaxExpandedHeight = 340;
+
+    /// <summary>설정을 열었을 때 확장되는 패널 크기 (탭 영역 포함).</summary>
+    public const double SettingsPanelWidth = 540, SettingsPanelHeight = 480;
+    public const int CurrentDesignVersion = 2;
+
+    /// <summary>
+    /// 이전 디자인의 기본값을 그대로 쓰고 있으면 새 디자인 기본값으로 바꾼다 (사용자가 직접 바꾼 값은 유지).
+    /// </summary>
+    public bool MigrateDesignDefaults()
+    {
+        if (DesignVersion >= CurrentDesignVersion) return false;
+        if (string.Equals(AccentColor, "#9EB4FF", StringComparison.OrdinalIgnoreCase)) AccentColor = "#1ED760";
+        if (Math.Abs(CornerRadius - 24) < 0.01) CornerRadius = 20;
+        DesignVersion = CurrentDesignVersion;
+        return true;
+    }
 
     /// <summary>손상되었거나 범위를 벗어난 값을 안전한 범위로 보정한다.</summary>
     public void Normalize()
@@ -79,7 +98,7 @@ public partial class AppSettings : ObservableObject
         WeatherRefreshMinutes = Math.Clamp(WeatherRefreshMinutes, 10, 60);
         HookPort = HookPort is >= 1024 and <= 65535 ? HookPort : 17432;
         SummaryMaxLength = Math.Clamp(SummaryMaxLength, 10, 120);
-        if (string.IsNullOrWhiteSpace(AccentColor)) AccentColor = "#9EB4FF";
+        if (string.IsNullOrWhiteSpace(AccentColor)) AccentColor = "#1ED760";
         if (!Enum.IsDefined(Theme)) Theme = AppTheme.Dark;
         if (!Enum.IsDefined(LastSelectedTab)) LastSelectedTab = NowBarTab.Weather;
         if (!Enum.IsDefined(TemperatureUnit)) TemperatureUnit = TemperatureUnit.Celsius;

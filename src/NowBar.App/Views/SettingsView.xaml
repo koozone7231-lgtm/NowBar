@@ -1,290 +1,365 @@
+<!--
+  확장 패널 안에서 열리는 설정 화면.
+  상단: 닫기 · 제목 · 저장 상태 · [되돌리기] [저장]
+  그 아래: 섹션 칩 (일반 · 디자인 · 날씨 · 음악 · AI 작업) → 선택한 섹션만 스크롤 영역에 표시
+-->
 <UserControl x:Class="NowBar.App.Views.SettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:c="clr-namespace:NowBar.App.Controls">
+             xmlns:c="clr-namespace:NowBar.App.Controls"
+             xmlns:vm="clr-namespace:NowBar.App.ViewModels">
   <UserControl.Resources>
     <Style x:Key="Label" TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
       <Setter Property="Margin" Value="0,6,12,6"/>
-      <Setter Property="Width" Value="170"/>
+      <Setter Property="Width" Value="128"/>
     </Style>
     <Style x:Key="Value" TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
-      <Setter Property="Width" Value="60"/>
+      <Setter Property="Width" Value="58"/>
       <Setter Property="TextAlignment" Value="Right"/>
     </Style>
     <Style x:Key="Card" TargetType="Border">
       <Setter Property="Background" Value="{DynamicResource Brush.Card}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="CornerRadius" Value="12"/>
-      <Setter Property="Padding" Value="16,10"/>
+      <Setter Property="CornerRadius" Value="8"/>
+      <Setter Property="Padding" Value="14,8"/>
+      <Setter Property="Margin" Value="0,0,0,10"/>
     </Style>
     <Style x:Key="Row" TargetType="DockPanel">
       <Setter Property="Margin" Value="0,2"/>
       <Setter Property="LastChildFill" Value="True"/>
     </Style>
+    <Style x:Key="CardTitle" TargetType="TextBlock" BasedOn="{StaticResource Text.Strong}">
+      <Setter Property="Margin" Value="0,2,0,6"/>
+    </Style>
+    <Style x:Key="Note" TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="TextTrimming" Value="None"/>
+    </Style>
   </UserControl.Resources>
 
-  <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="22,6,22,22">
-    <StackPanel>
+  <Grid Margin="16,10,16,12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
 
-      <!-- ── 일반 ── -->
-      <TextBlock Text="일반" Style="{StaticResource Text.Section}"/>
-      <Border Style="{StaticResource Card}">
-        <StackPanel>
-          <CheckBox Content="Windows 시작 시 자동 실행" IsChecked="{Binding Settings.StartWithWindows}" Style="{StaticResource Input.Check}"/>
-          <TextBlock Text="{Binding StartupStatus}" Style="{StaticResource Text.Caption}" Margin="22,0,0,6"/>
-          <CheckBox Content="마우스를 올리면 자동으로 확장" IsChecked="{Binding Settings.AutoExpand}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="항상 위에 표시" IsChecked="{Binding Settings.AlwaysOnTop}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="전체 화면 앱(게임·발표)이 실행 중이면 숨기기" IsChecked="{Binding Settings.HideInFullscreen}" Style="{StaticResource Input.Check}"/>
+    <!-- ── 헤더 ── -->
+    <DockPanel>
+      <Button DockPanel.Dock="Left" Style="{StaticResource Button.Icon}" Command="{Binding CloseCommand}"
+              ToolTip="설정 닫기 (ESC)" AutomationProperties.Name="설정 닫기">
+        <c:Icon Kind="X" Width="16" Height="16" Foreground="{DynamicResource Brush.Text}"/>
+      </Button>
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button Content="되돌리기" Style="{StaticResource Button.Outline}" Command="{Binding RevertCommand}"
+                ToolTip="마지막으로 저장한 설정으로 되돌립니다"/>
+        <Button Content="저장" Style="{StaticResource Button.Primary}" Command="{Binding SaveCommand}"
+                ToolTip="설정 저장 (Ctrl+S)" Margin="6,0,0,0" MinWidth="64"/>
+      </StackPanel>
+      <StackPanel Margin="6,0,8,0" VerticalAlignment="Center">
+        <TextBlock Text="설정" Style="{StaticResource Text.Strong}" FontSize="16"/>
+        <TextBlock Text="{Binding SaveStatusText}">
+          <TextBlock.Style>
+            <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                  <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </TextBlock.Style>
+        </TextBlock>
+      </StackPanel>
+    </DockPanel>
 
-          <DockPanel Style="{StaticResource Row}" Margin="0,10,0,2">
-            <TextBlock Text="자동 축소 지연" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CollapseDelayMs, StringFormat={}{0} ms}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="200" Maximum="2000" TickFrequency="50" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.CollapseDelayMs}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="상단 여백" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.TopOffset, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.TopOffset}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="가로 위치 (중앙 기준)" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.HorizontalOffset, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="-600" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.HorizontalOffset}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="축소 시 너비" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CompactWidth, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="160" Maximum="400" TickFrequency="10" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.CompactWidth}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="캡슐 높이" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CapsuleHeight, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="40" Maximum="64" TickFrequency="2" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.CapsuleHeight}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="확장 패널 너비" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.ExpandedWidth, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="440" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.ExpandedWidth}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="확장 패널 높이" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.ExpandedHeight, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="220" Maximum="340" TickFrequency="10" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.ExpandedHeight}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
-            <Button Content="크기·위치 기본값으로" Style="{StaticResource Button.Pill}" Command="{Binding ResetLayoutCommand}"/>
-            <Button Content="데이터 폴더 열기" Style="{StaticResource Button.Pill}" Command="{Binding OpenDataFolderCommand}" Margin="8,0,0,0"/>
-          </StackPanel>
-        </StackPanel>
-      </Border>
-
-      <!-- ── 디자인 ── -->
-      <TextBlock Text="디자인" Style="{StaticResource Text.Section}"/>
-      <Border Style="{StaticResource Card}">
-        <StackPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="테마" Style="{StaticResource Label}"/>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <RadioButton Content="다크 모드" GroupName="Theme" Style="{StaticResource Input.Radio}"
-                           IsChecked="{Binding Settings.Theme, Converter={StaticResource EnumToBool}, ConverterParameter=Dark}"/>
-              <RadioButton Content="밝은 모드" GroupName="Theme" Style="{StaticResource Input.Radio}"
-                           IsChecked="{Binding Settings.Theme, Converter={StaticResource EnumToBool}, ConverterParameter=Light}"/>
-            </StackPanel>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="배경 불투명도" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.BackgroundOpacity, StringFormat={}{0:P0}}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="0.5" Maximum="1" TickFrequency="0.02" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.BackgroundOpacity}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="모서리 둥글기" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CornerRadius, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="8" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.CornerRadius}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="애니메이션 속도" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.AnimationMs, StringFormat={}{0} ms}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="80" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.AnimationMs}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="강조 색상" Style="{StaticResource Label}"/>
-            <TextBox DockPanel.Dock="Right" Width="90" Style="{StaticResource Input.Text}"
-                     Text="{Binding Settings.AccentColor, UpdateSourceTrigger=LostFocus}"/>
-            <ItemsControl ItemsSource="{Binding AccentPresets}" VerticalAlignment="Center">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <Button Style="{StaticResource Button.Bare}" Width="26" Height="26" Margin="0,0,4,0" ToolTip="{Binding}"
-                          Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                          CommandParameter="{Binding}">
-                    <Ellipse Width="16" Height="16" Fill="{Binding}" Stroke="{DynamicResource Brush.Border}"/>
-                  </Button>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </DockPanel>
-        </StackPanel>
-      </Border>
-
-      <!-- ── 날씨 ── -->
-      <TextBlock Text="날씨" Style="{StaticResource Text.Section}"/>
-      <Border Style="{StaticResource Card}">
-        <StackPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="현재 지역" Style="{StaticResource Label}"/>
-            <Button DockPanel.Dock="Right" Content="지우기" Style="{StaticResource Button.Pill}" Command="{Binding ClearLocationCommand}"/>
-            <TextBlock Text="{Binding CurrentLocationText}" Style="{StaticResource Text.Strong}"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}" Margin="0,8,0,2">
-            <Button DockPanel.Dock="Right" Content="검색" Style="{StaticResource Button.Primary}" Command="{Binding SearchLocationCommand}"
-                    Margin="8,0,0,0" IsDefault="False"/>
-            <TextBox x:Name="LocationBox" Style="{StaticResource Input.Text}" Text="{Binding LocationQuery, UpdateSourceTrigger=PropertyChanged}"
-                     KeyDown="LocationBox_KeyDown"/>
-          </DockPanel>
-          <TextBlock Text="{Binding LocationStatus}" Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,4,0,4"
-                     Visibility="{Binding LocationStatus, Converter={StaticResource NullToVis}}"/>
-          <ListBox ItemsSource="{Binding LocationResults}" SelectedItem="{Binding SelectedResult}" MaxHeight="160"
-                   Background="{DynamicResource Brush.Window}" BorderBrush="{DynamicResource Brush.Border}" Foreground="{DynamicResource Brush.Text}"
-                   Visibility="{Binding LocationResults.Count, Converter={StaticResource NullToVis}}">
-            <ListBox.ItemTemplate>
-              <DataTemplate>
-                <StackPanel Orientation="Horizontal" Margin="2,3">
-                  <TextBlock Text="{Binding DisplayName}" Style="{StaticResource Text.Base}"/>
-                  <TextBlock Style="{StaticResource Text.Caption}" Margin="10,0,0,0">
-                    <Run Text="{Binding Latitude, StringFormat={}{0:0.00}}"/>, <Run Text="{Binding Longitude, StringFormat={}{0:0.00}}"/>
-                  </TextBlock>
-                </StackPanel>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
-          </ListBox>
-          <DockPanel Style="{StaticResource Row}" Margin="0,10,0,2">
-            <TextBlock Text="온도 단위" Style="{StaticResource Label}"/>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <RadioButton Content="섭씨 (°C)" GroupName="Unit" Style="{StaticResource Input.Radio}"
-                           IsChecked="{Binding Settings.TemperatureUnit, Converter={StaticResource EnumToBool}, ConverterParameter=Celsius}"/>
-              <RadioButton Content="화씨 (°F)" GroupName="Unit" Style="{StaticResource Input.Radio}"
-                           IsChecked="{Binding Settings.TemperatureUnit, Converter={StaticResource EnumToBool}, ConverterParameter=Fahrenheit}"/>
-            </StackPanel>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="업데이트 주기" Style="{StaticResource Label}"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.WeatherRefreshMinutes, StringFormat={}{0}분}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="10" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.WeatherRefreshMinutes}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <TextBlock Text="데이터: Open-Meteo (API 키 불필요). 위치는 자동으로 수집하지 않습니다." Style="{StaticResource Text.Caption}" Margin="0,6,0,0"/>
-        </StackPanel>
-      </Border>
-
-      <!-- ── 음악 ── -->
-      <TextBlock Text="음악" Style="{StaticResource Text.Section}"/>
-      <Border Style="{StaticResource Card}">
-        <StackPanel>
-          <CheckBox Content="Windows가 지정한 현재 미디어 세션을 자동 선택" IsChecked="{Binding Settings.AutoSelectMediaSession}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="여러 프로그램이 재생 중이면 세션 선택 버튼 표시" IsChecked="{Binding Settings.AllowSessionPicker}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="앨범 이미지 / 동영상 썸네일 표시" IsChecked="{Binding Settings.ShowAlbumArt}" Style="{StaticResource Input.Check}"/>
-          <TextBlock Text="Windows 시스템 미디어 세션(GSMTC)을 제공하는 프로그램만 표시·제어할 수 있습니다." Style="{StaticResource Text.Caption}"
-                     TextWrapping="Wrap" Margin="0,6,0,0"/>
-        </StackPanel>
-      </Border>
-
-      <!-- ── AI 작업 (Claude Code) ── -->
-      <TextBlock Text="AI 작업 (Claude Code)" Style="{StaticResource Text.Section}"/>
-      <Border Style="{StaticResource Card}">
-        <StackPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="연결 상태" Style="{StaticResource Label}"/>
-            <TextBlock Text="{Binding AI.ConnectionText}" Style="{StaticResource Text.Strong}" TextWrapping="Wrap" TextTrimming="None"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="수신 주소" Style="{StaticResource Label}"/>
-            <TextBlock Text="{Binding HookUrl}" Style="{StaticResource Text.Sub}"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="인증 토큰" Style="{StaticResource Label}"/>
-            <Button DockPanel.Dock="Right" Content="토큰 재생성" Style="{StaticResource Button.Pill}" Command="{Binding RegenerateTokenCommand}"/>
-            <TextBlock Text="{Binding MaskedToken}" Style="{StaticResource Text.Sub}"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="포트" Style="{StaticResource Label}"/>
-            <Button DockPanel.Dock="Right" Content="적용" Style="{StaticResource Button.Pill}" Command="{Binding ApplyPortCommand}"/>
-            <TextBox Width="90" HorizontalAlignment="Left" Style="{StaticResource Input.Text}" Text="{Binding HookPortText, UpdateSourceTrigger=PropertyChanged}"/>
-          </DockPanel>
-          <DockPanel Style="{StaticResource Row}">
-            <TextBlock Text="Claude 설정 파일" Style="{StaticResource Label}"/>
-            <Button DockPanel.Dock="Right" Content="폴더 열기" Style="{StaticResource Button.Pill}" Command="{Binding OpenClaudeFolderCommand}"/>
-            <TextBlock Text="{Binding ClaudeSettingsPath}" Style="{StaticResource Text.Sub}" ToolTip="{Binding ClaudeSettingsPath}"/>
-          </DockPanel>
-
-          <WrapPanel Margin="0,10,0,4">
-            <Button Content="Claude Code 연동 설정" Style="{StaticResource Button.Primary}" Command="{Binding RunClaudeSetupCommand}" Margin="0,0,8,6"/>
-            <Button Content="연동 테스트" Style="{StaticResource Button.Pill}" Command="{Binding TestConnectionCommand}" Margin="0,0,8,6"/>
-            <Button Content="연결 해제" Style="{StaticResource Button.Pill}" Command="{Binding DisconnectClaudeCommand}" Margin="0,0,8,6"/>
-            <Button Content="수동 설정용 JSON 복사" Style="{StaticResource Button.Pill}" Command="{Binding CopyManualJsonCommand}" Margin="0,0,8,6"/>
-          </WrapPanel>
-
-          <Border Background="{DynamicResource Brush.Window}" CornerRadius="8" Padding="10,8" Margin="0,2,0,6"
-                  Visibility="{Binding SetupLog.Count, Converter={StaticResource NullToVis}}">
-            <ItemsControl ItemsSource="{Binding SetupLog}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <TextBlock Text="{Binding}" Style="{StaticResource Text.Sub}" TextWrapping="Wrap" TextTrimming="None" Margin="0,1"/>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </Border>
-
-          <CheckBox Content="Claude Code 연동 사용 (로컬 서버 실행)" IsChecked="{Binding Settings.ClaudeIntegrationEnabled}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="작업 요약 표시 (프롬프트 앞부분을 짧게 표시 · 메모리에만 보관)" IsChecked="{Binding Settings.ShowTaskSummary}" Style="{StaticResource Input.Check}"/>
-          <DockPanel Style="{StaticResource Row}" Margin="22,0,0,2"
-                     Visibility="{Binding Settings.ShowTaskSummary, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="요약 최대 길이" Style="{StaticResource Label}" Width="148"/>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.SummaryMaxLength, StringFormat={}{0}자}" Style="{StaticResource Value}"/>
-            <Slider Style="{StaticResource Slider.NowBar}" Minimum="10" Maximum="120" TickFrequency="5" IsSnapToTickEnabled="True"
-                    Value="{Binding Settings.SummaryMaxLength}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <CheckBox Content="Claude 알림 표시" IsChecked="{Binding Settings.ShowNotifications}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="여러 세션 구분 표시" IsChecked="{Binding Settings.ShowSessions}" Style="{StaticResource Input.Check}"/>
-          <CheckBox Content="작업 중일 때 캡슐 테두리 글로우 효과" IsChecked="{Binding Settings.ShowWorkingGlow}" Style="{StaticResource Input.Check}"/>
-          <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,6,0,0"
-                     Text="Claude Code가 공식 제공하는 Hooks 이벤트만 수신합니다. 대화 내용·명령어·환경 변수는 저장하거나 외부로 전송하지 않으며, 서버는 127.0.0.1에서만 접속을 받습니다."/>
-          <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
-                     Foreground="{DynamicResource Brush.Warning}"
-                     Text="연동 사용 · 포트 · 인증 토큰 · Windows 자동 실행은 Claude 설정 파일/레지스트리와 어긋나지 않도록 [저장]을 누르지 않아도 즉시 저장됩니다."/>
-        </StackPanel>
-      </Border>
-
-      <!-- ── 수동 작업 등록 ── -->
-      <TextBlock Text="수동 작업 등록" Style="{StaticResource Text.Section}"/>
-      <Border Style="{StaticResource Card}">
-        <StackPanel>
-          <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" TextTrimming="None" Margin="0,0,0,8"
-                     Text="Hooks를 사용할 수 없는 환경에서는 작업을 직접 등록해 AI 작업 탭에 표시할 수 있습니다."/>
-          <DockPanel Style="{StaticResource Row}">
-            <Button DockPanel.Dock="Right" Content="작업 시작" Style="{StaticResource Button.Primary}" Command="{Binding StartManualTaskCommand}" Margin="8,0,0,0"/>
-            <TextBox Style="{StaticResource Input.Text}" Text="{Binding ManualTaskName, UpdateSourceTrigger=PropertyChanged}"/>
-          </DockPanel>
-          <StackPanel Orientation="Horizontal" Margin="0,8,0,2" Visibility="{Binding AI.HasManualTask, Converter={StaticResource BoolToVis}}">
-            <Button Content="완료로 표시" Style="{StaticResource Button.Pill}" Command="{Binding CompleteManualTaskCommand}"/>
-            <Button Content="지우기" Style="{StaticResource Button.Pill}" Command="{Binding ClearManualTaskCommand}" Margin="8,0,0,0"/>
-          </StackPanel>
-        </StackPanel>
-      </Border>
-
-      <TextBlock Text="NowBar 1.0 · 트레이 아이콘에서 종료할 수 있습니다." Style="{StaticResource Text.Caption}" Margin="0,16,0,0"/>
+    <!-- ── 섹션 칩 ── -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,10">
+      <Button Content="일반" Style="{StaticResource Button.Chip}" Tag="{Binding IsGeneralSection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:SettingsSection.General}"/>
+      <Button Content="디자인" Style="{StaticResource Button.Chip}" Tag="{Binding IsDesignSection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:SettingsSection.Design}"/>
+      <Button Content="날씨" Style="{StaticResource Button.Chip}" Tag="{Binding IsWeatherSection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:SettingsSection.Weather}"/>
+      <Button Content="음악" Style="{StaticResource Button.Chip}" Tag="{Binding IsMusicSection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:SettingsSection.Music}"/>
+      <Button Content="AI 작업" Style="{StaticResource Button.Chip}" Tag="{Binding IsAISection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:SettingsSection.AI}"/>
     </StackPanel>
-  </ScrollViewer>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,6,0">
+      <Grid>
+
+        <!-- ── 일반 ── -->
+        <StackPanel Visibility="{Binding IsGeneralSection, Converter={StaticResource BoolToVis}}">
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <CheckBox Content="Windows 시작 시 자동 실행" IsChecked="{Binding Settings.StartWithWindows}" Style="{StaticResource Input.Check}"/>
+              <TextBlock Text="{Binding StartupStatus}" Style="{StaticResource Note}" Margin="0,0,0,4"/>
+              <CheckBox Content="마우스를 올리면 자동으로 확장" IsChecked="{Binding Settings.AutoExpand}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="항상 위에 표시" IsChecked="{Binding Settings.AlwaysOnTop}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="전체 화면 앱(게임·발표) 실행 중이면 숨기기" IsChecked="{Binding Settings.HideInFullscreen}" Style="{StaticResource Input.Check}"/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="위치와 크기" Style="{StaticResource CardTitle}"/>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="자동 축소 지연" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CollapseDelayMs, StringFormat={}{0} ms}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="200" Maximum="2000" TickFrequency="50" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.CollapseDelayMs}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="상단 여백" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.TopOffset, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.TopOffset}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="가로 위치" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.HorizontalOffset, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="-600" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.HorizontalOffset}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="축소 시 너비" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CompactWidth, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="160" Maximum="400" TickFrequency="10" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.CompactWidth}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="캡슐 높이" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CapsuleHeight, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="40" Maximum="64" TickFrequency="2" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.CapsuleHeight}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="확장 패널 너비" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.ExpandedWidth, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="440" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.ExpandedWidth}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="확장 패널 높이" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.ExpandedHeight, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="220" Maximum="340" TickFrequency="10" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.ExpandedHeight}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <WrapPanel Margin="0,8,0,4">
+                <Button Content="크기·위치 기본값" Style="{StaticResource Button.Pill}" Command="{Binding ResetLayoutCommand}" Margin="0,0,6,4"/>
+                <Button Content="데이터 폴더 열기" Style="{StaticResource Button.Pill}" Command="{Binding OpenDataFolderCommand}" Margin="0,0,6,4"/>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ── 디자인 ── -->
+        <StackPanel Visibility="{Binding IsDesignSection, Converter={StaticResource BoolToVis}}">
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="테마" Style="{StaticResource Label}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <RadioButton Content="다크" GroupName="Theme" Style="{StaticResource Input.Radio}"
+                               IsChecked="{Binding Settings.Theme, Converter={StaticResource EnumToBool}, ConverterParameter=Dark}"/>
+                  <RadioButton Content="라이트" GroupName="Theme" Style="{StaticResource Input.Radio}"
+                               IsChecked="{Binding Settings.Theme, Converter={StaticResource EnumToBool}, ConverterParameter=Light}"/>
+                </StackPanel>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="배경 불투명도" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.BackgroundOpacity, StringFormat={}{0:P0}}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="0.5" Maximum="1" TickFrequency="0.02" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.BackgroundOpacity}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="모서리 둥글기" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.CornerRadius, StringFormat={}{0:0} px}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="8" Maximum="32" TickFrequency="1" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.CornerRadius}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="애니메이션 속도" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.AnimationMs, StringFormat={}{0} ms}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="80" Maximum="600" TickFrequency="10" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.AnimationMs}" VerticalAlignment="Center"/>
+              </DockPanel>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="강조 색상" Style="{StaticResource CardTitle}"/>
+              <TextBlock Text="재생 버튼, 선택 표시, 토글, 작업 중 글로우에만 쓰입니다. 나머지 UI는 무채색입니다." Style="{StaticResource Note}" Margin="0,0,0,8"/>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBox DockPanel.Dock="Right" Width="110" Style="{StaticResource Input.Text}"
+                         Text="{Binding Settings.AccentColor, UpdateSourceTrigger=LostFocus}"/>
+                <ItemsControl ItemsSource="{Binding AccentPresets}" VerticalAlignment="Center">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Style="{StaticResource Button.Bare}" Width="30" Height="30" Margin="0,0,2,0" ToolTip="{Binding}"
+                              Command="{Binding DataContext.SetAccentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                              CommandParameter="{Binding}">
+                        <Ellipse Width="18" Height="18" Fill="{Binding}"/>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </DockPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ── 날씨 ── -->
+        <StackPanel Visibility="{Binding IsWeatherSection, Converter={StaticResource BoolToVis}}">
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="현재 지역" Style="{StaticResource Label}"/>
+                <Button DockPanel.Dock="Right" Content="지우기" Style="{StaticResource Button.Pill}" Command="{Binding ClearLocationCommand}"/>
+                <TextBlock Text="{Binding CurrentLocationText}" Style="{StaticResource Text.Strong}"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}" Margin="0,8,0,2">
+                <Button DockPanel.Dock="Right" Content="검색" Style="{StaticResource Button.Primary}" Command="{Binding SearchLocationCommand}" Margin="6,0,0,0"/>
+                <TextBox x:Name="LocationBox" Style="{StaticResource Input.Text}" Text="{Binding LocationQuery, UpdateSourceTrigger=PropertyChanged}"
+                         KeyDown="LocationBox_KeyDown" ToolTip="예: Seoul, 서울특별시, Busan"/>
+              </DockPanel>
+              <TextBlock Text="{Binding LocationStatus}" Style="{StaticResource Note}" Margin="4,4,0,4"
+                         Visibility="{Binding LocationStatus, Converter={StaticResource NullToVis}}"/>
+              <ListBox ItemsSource="{Binding LocationResults}" SelectedItem="{Binding SelectedResult}" MaxHeight="130"
+                       Background="Transparent" BorderThickness="0" ItemContainerStyle="{StaticResource List.Item}"
+                       Visibility="{Binding LocationResults.Count, Converter={StaticResource NullToVis}}">
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding DisplayName}" Style="{StaticResource Text.Base}"/>
+                      <TextBlock Style="{StaticResource Text.Caption}" Margin="10,0,0,0">
+                        <Run Text="{Binding Latitude, StringFormat={}{0:0.00}}"/>, <Run Text="{Binding Longitude, StringFormat={}{0:0.00}}"/>
+                      </TextBlock>
+                    </StackPanel>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="온도 단위" Style="{StaticResource Label}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <RadioButton Content="섭씨 °C" GroupName="Unit" Style="{StaticResource Input.Radio}"
+                               IsChecked="{Binding Settings.TemperatureUnit, Converter={StaticResource EnumToBool}, ConverterParameter=Celsius}"/>
+                  <RadioButton Content="화씨 °F" GroupName="Unit" Style="{StaticResource Input.Radio}"
+                               IsChecked="{Binding Settings.TemperatureUnit, Converter={StaticResource EnumToBool}, ConverterParameter=Fahrenheit}"/>
+                </StackPanel>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="업데이트 주기" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.WeatherRefreshMinutes, StringFormat={}{0}분}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="10" Maximum="60" TickFrequency="5" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.WeatherRefreshMinutes}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock Text="데이터: Open-Meteo (API 키 불필요). 위치는 자동으로 수집하지 않습니다." Style="{StaticResource Note}" Margin="0,6,0,2"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ── 음악 ── -->
+        <StackPanel Visibility="{Binding IsMusicSection, Converter={StaticResource BoolToVis}}">
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <CheckBox Content="Windows가 지정한 현재 미디어 세션 자동 선택" IsChecked="{Binding Settings.AutoSelectMediaSession}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="여러 프로그램이 재생 중이면 세션 선택 칩 표시" IsChecked="{Binding Settings.AllowSessionPicker}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="앨범 이미지 / 동영상 썸네일 표시" IsChecked="{Binding Settings.ShowAlbumArt}" Style="{StaticResource Input.Check}"/>
+              <TextBlock Text="Windows 시스템 미디어 세션(GSMTC)을 제공하는 프로그램만 표시·제어할 수 있습니다." Style="{StaticResource Note}" Margin="0,6,0,2"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ── AI 작업 (Claude Code) ── -->
+        <StackPanel Visibility="{Binding IsAISection, Converter={StaticResource BoolToVis}}">
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="연결 상태" Style="{StaticResource Label}"/>
+                <TextBlock Text="{Binding AI.ConnectionText}" Style="{StaticResource Text.Strong}" TextWrapping="Wrap" TextTrimming="None"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="수신 주소" Style="{StaticResource Label}"/>
+                <TextBlock Text="{Binding HookUrl}" Style="{StaticResource Text.Sub}"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="인증 토큰" Style="{StaticResource Label}"/>
+                <Button DockPanel.Dock="Right" Content="재생성" Style="{StaticResource Button.Pill}" Command="{Binding RegenerateTokenCommand}"/>
+                <TextBlock Text="{Binding MaskedToken}" Style="{StaticResource Text.Sub}"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="포트" Style="{StaticResource Label}"/>
+                <Button DockPanel.Dock="Right" Content="적용" Style="{StaticResource Button.Pill}" Command="{Binding ApplyPortCommand}"/>
+                <TextBox Width="90" HorizontalAlignment="Left" Style="{StaticResource Input.Text}" Text="{Binding HookPortText, UpdateSourceTrigger=PropertyChanged}"/>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="Claude 설정 파일" Style="{StaticResource Label}"/>
+                <Button DockPanel.Dock="Right" Content="폴더" Style="{StaticResource Button.Pill}" Command="{Binding OpenClaudeFolderCommand}"/>
+                <TextBlock Text="{Binding ClaudeSettingsPath}" Style="{StaticResource Text.Sub}" ToolTip="{Binding ClaudeSettingsPath}"/>
+              </DockPanel>
+
+              <WrapPanel Margin="0,10,0,2">
+                <Button Content="Claude Code 연동 설정" Style="{StaticResource Button.Primary}" Command="{Binding RunClaudeSetupCommand}" Margin="0,0,6,6"/>
+                <Button Content="연동 테스트" Style="{StaticResource Button.Pill}" Command="{Binding TestConnectionCommand}" Margin="0,0,6,6"/>
+                <Button Content="연결 해제" Style="{StaticResource Button.Outline}" Command="{Binding DisconnectClaudeCommand}" Margin="0,0,6,6"/>
+                <Button Content="수동 설정용 JSON 복사" Style="{StaticResource Button.Outline}" Command="{Binding CopyManualJsonCommand}" Margin="0,0,6,6"/>
+              </WrapPanel>
+
+              <Border Background="{DynamicResource Brush.Surface}" CornerRadius="6" Padding="10,8" Margin="0,2,0,4"
+                      Visibility="{Binding SetupLog.Count, Converter={StaticResource NullToVis}}">
+                <ItemsControl ItemsSource="{Binding SetupLog}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding}" Style="{StaticResource Text.Sub}" TextWrapping="Wrap" TextTrimming="None" Margin="0,1"/>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Border>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <CheckBox Content="Claude Code 연동 사용 (로컬 서버 실행)" IsChecked="{Binding Settings.ClaudeIntegrationEnabled}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="작업 요약 표시 (프롬프트 앞부분 · 메모리에만 보관)" IsChecked="{Binding Settings.ShowTaskSummary}" Style="{StaticResource Input.Check}"/>
+              <DockPanel Style="{StaticResource Row}" Visibility="{Binding Settings.ShowTaskSummary, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="요약 최대 길이" Style="{StaticResource Label}"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.SummaryMaxLength, StringFormat={}{0}자}" Style="{StaticResource Value}"/>
+                <Slider Style="{StaticResource Slider.NowBar}" Minimum="10" Maximum="120" TickFrequency="5" IsSnapToTickEnabled="True"
+                        Value="{Binding Settings.SummaryMaxLength}" VerticalAlignment="Center"/>
+              </DockPanel>
+              <CheckBox Content="Claude 알림 표시" IsChecked="{Binding Settings.ShowNotifications}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="여러 세션 구분 표시" IsChecked="{Binding Settings.ShowSessions}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="작업 중일 때 캡슐 테두리 글로우" IsChecked="{Binding Settings.ShowWorkingGlow}" Style="{StaticResource Input.Check}"/>
+              <TextBlock Style="{StaticResource Note}" Margin="0,6,0,0"
+                         Text="Claude Code가 공식 제공하는 Hooks 이벤트만 수신합니다. 대화 내용·명령어·환경 변수는 저장하거나 외부로 전송하지 않으며, 서버는 127.0.0.1에서만 접속을 받습니다."/>
+              <TextBlock Style="{StaticResource Note}" Margin="0,4,0,2" Foreground="{DynamicResource Brush.Warning}"
+                         Text="연동 사용 · 포트 · 인증 토큰 · Windows 자동 실행은 Claude 설정 파일/레지스트리와 어긋나지 않도록 [저장] 없이 즉시 저장됩니다."/>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="수동 작업 등록" Style="{StaticResource CardTitle}"/>
+              <TextBlock Style="{StaticResource Note}" Margin="0,0,0,8"
+                         Text="Hooks를 사용할 수 없는 환경에서는 작업을 직접 등록해 AI 작업 탭에 표시할 수 있습니다."/>
+              <DockPanel Style="{StaticResource Row}">
+                <Button DockPanel.Dock="Right" Content="시작" Style="{StaticResource Button.Primary}" Command="{Binding StartManualTaskCommand}" Margin="6,0,0,0"/>
+                <TextBox Style="{StaticResource Input.Text}" Text="{Binding ManualTaskName, UpdateSourceTrigger=PropertyChanged}"/>
+              </DockPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,8,0,2" Visibility="{Binding AI.HasManualTask, Converter={StaticResource BoolToVis}}">
+                <Button Content="완료로 표시" Style="{StaticResource Button.Pill}" Command="{Binding CompleteManualTaskCommand}"/>
+                <Button Content="지우기" Style="{StaticResource Button.Outline}" Command="{Binding ClearManualTaskCommand}" Margin="6,0,0,0"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </ScrollViewer>
+  </Grid>
 </UserControl>

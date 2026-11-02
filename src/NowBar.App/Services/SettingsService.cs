@@ -70,6 +70,7 @@ public sealed class SettingsService : IDisposable
 
         Settings = loaded ?? new AppSettings();
         Settings.Normalize();
+        Settings.MigrateDesignDefaults();
         if (string.IsNullOrWhiteSpace(Settings.HookToken))
             Settings.HookToken = TokenGenerator.Create();
 

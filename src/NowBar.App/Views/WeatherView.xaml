@@ -72,7 +72,7 @@
       <Border Style="{StaticResource Card.Stat}">
         <StackPanel>
           <StackPanel Orientation="Horizontal">
-            <c:Icon Kind="Droplet" Width="12" Height="12" Foreground="{DynamicResource Brush.Music}" VerticalAlignment="Center"/>
+            <c:Icon Kind="Droplet" Width="12" Height="12" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
             <TextBlock Text="습도" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
           </StackPanel>
           <TextBlock Text="{Binding HumidityText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
@@ -81,7 +81,7 @@
       <Border Style="{StaticResource Card.Stat}">
         <StackPanel>
           <StackPanel Orientation="Horizontal">
-            <c:Icon Kind="Umbrella" Width="12" Height="12" Foreground="{DynamicResource Brush.Music}" VerticalAlignment="Center"/>
+            <c:Icon Kind="Umbrella" Width="12" Height="12" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
             <TextBlock Text="{Binding PrecipitationLabel}" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
           </StackPanel>
           <TextBlock Text="{Binding PrecipitationText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
@@ -90,7 +90,7 @@
       <Border Style="{StaticResource Card.Stat}">
         <StackPanel>
           <StackPanel Orientation="Horizontal">
-            <c:Icon Kind="ArrowUp" Width="12" Height="12" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center"/>
+            <c:Icon Kind="ArrowUp" Width="12" Height="12" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
             <TextBlock Text="최고" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
           </StackPanel>
           <TextBlock Text="{Binding MaxText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
@@ -99,7 +99,7 @@
       <Border Style="{StaticResource Card.Stat}">
         <StackPanel>
           <StackPanel Orientation="Horizontal">
-            <c:Icon Kind="ArrowDown" Width="12" Height="12" Foreground="{DynamicResource Brush.Music}" VerticalAlignment="Center"/>
+            <c:Icon Kind="ArrowDown" Width="12" Height="12" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
             <TextBlock Text="최저" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
           </StackPanel>
           <TextBlock Text="{Binding MinText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>

@@ -83,7 +83,7 @@ dotnet publish src/NowBar.App/NowBar.App.csproj -c Release -r win-x64 --self-con
 
 ## 5. 날씨
 
-1. 확장 패널 오른쪽 위 설정 아이콘(⚙) → **날씨** → 지역 검색
+1. 확장 패널 오른쪽 위 설정 아이콘 → (패널이 커지며 설정이 열림) **날씨** 칩 → 지역 검색
 2. 결과 목록에서 지역을 클릭하면 바로 적용됩니다.
 
 - 위치는 자동으로 수집하지 않습니다. 사용자가 직접 고른 지역만 사용합니다.
@@ -182,11 +182,23 @@ NowBar는 Claude Code가 **공식 제공하는 Hooks**만 사용합니다. Claud
 
 ### 저장 방식
 
-- 설정 창에서 바꾼 값은 화면에 바로 **미리보기**로 반영되지만, 아래쪽 **[저장]** (또는 `Ctrl+S`)을 눌러야 파일에 기록됩니다.
+- 설정은 별도 창이 아니라 **NowBar 패널이 커지면서 그 안에** 열립니다 (설정 아이콘 또는 트레이 메뉴 → 설정). 열려 있는 동안은 마우스가 나가도 닫히지 않으며, ✕ · `ESC` · 탭 클릭으로 닫습니다.
+- 바꾼 값은 화면에 바로 **미리보기**로 반영되지만, 위쪽 **[저장]** (또는 `Ctrl+S`)을 눌러야 파일에 기록됩니다.
 - **[되돌리기]** 는 마지막으로 저장한 상태로 돌아갑니다. 저장하지 않고 창을 닫으면 저장할지 묻고, [아니요]를 고르면 되돌립니다.
 - 예외: 연동 사용 · 포트 · 인증 토큰 · Windows 자동 실행은 Claude 설정 파일/레지스트리와 어긋나지 않도록 **즉시 저장**됩니다.
-- 설정 창 밖의 상태(마지막 선택 탭 등)는 자동으로 저장됩니다.
+- 설정 밖의 상태(마지막 선택 탭 등)는 자동으로 저장됩니다.
 
+## 디자인
+
+Spotify 웹 플레이어에서 영감을 받은 다크 디자인 시스템을 따릅니다.
+
+- 표면: 근검정 단계 `#121212` → `#181818` → `#1f1f1f`, 글자는 흰색 / 은색(`#b3b3b3`)
+- 강조색은 하나(기본 `#1ed760`)이며 재생 버튼·선택 표시·토글·작업 중 글로우 같은 **기능적인 곳에만** 사용합니다. 나머지 UI는 무채색이고, 색은 앨범 이미지에서 나옵니다.
+- 버튼은 알약(pill), 재생 버튼은 원형, 체크박스는 토글 스위치, 입력칸은 알약 모양
+- 굵기는 Bold/Regular 이분법, 짙은 그림자(`0 8px 24px rgba(0,0,0,.5)`)
+- 의미 색: 경고 `#ffa42b`, 오류 `#f3727f`, 완료 `#539df5`
+- 글꼴: Circular(독점)의 대체 스택 `Helvetica Neue, Arial` + `맑은 고딕`. WPF는 자간(letter-spacing)을 지원하지 않아 대문자+넓은 자간 버튼 라벨은 적용하지 않았습니다.
+- 이전 버전의 기본값(강조색 `#9EB4FF`, 모서리 24px)을 쓰고 있었다면 처음 실행할 때 새 기본값으로 바뀝니다. 직접 바꾼 값은 유지됩니다.
 ## 9. 데이터 위치
 
 | 파일 | 내용 |
@@ -204,7 +216,7 @@ NowBar.sln
 src/NowBar.App/
   App.xaml(.cs)            시작/종료, 단일 실행, 전역 예외 처리, 트레이
   MainWindow.xaml(.cs)     상단 캡슐 창: 위치·애니메이션·마우스 오버·항상 위
-  Views/                   WeatherView, MusicView, AIActivityView, SettingsView/Window, HooksApprovalWindow
+  Views/                   WeatherView, MusicView, AIActivityView, SettingsView(패널 안 설정), HooksApprovalWindow
   ViewModels/              Main, Weather, Music, AIActivity, Settings
   Models/                  AppSettings, WeatherData, MediaSessionData, ClaudeSession
   Services/                WeatherService, MediaService, ClaudeHookServer, ClaudeSessionTracker,
@@ -230,7 +242,7 @@ publish/NowBar/            Release 배포 빌드
 | 실제 미디어 세션 정보 표시 | ✅ | 별도 프로세스(SMTC 등록 플레이어)로 확인 |
 | 재생/일시정지, 이전/다음, 재생 위치 | ✅ | 외부 플레이어가 명령 수신 로그 확인 |
 | Claude Code 이벤트 → 로컬 서버 → UI 반영 | ✅ | 실제 `claude -p` 실행 (임시 설정 파일 사용) |
-| 기존 Claude 설정 보존 / 백업 / 해제 | ✅ | 단위 테스트 + 설정 창 버튼 UI 자동화 |
+| 기존 Claude 설정 보존 / 백업 / 해제 | ✅ | 단위 테스트 + 설정 버튼 UI 자동화 |
 | 설정 유지(재실행) | ✅ | 단위 테스트 (저장→재로드) |
 | 시작 프로그램 등록 | ✅ (로직) | 테스트용 값 이름으로 레지스트리 등록/해제 확인 |
 | Release 빌드 | ✅ | 경고 0, 오류 0 / `dotnet test` 33개 통과 |
