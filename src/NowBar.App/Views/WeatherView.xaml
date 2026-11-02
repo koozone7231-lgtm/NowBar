@@ -1,0 +1,110 @@
+<UserControl x:Class="NowBar.App.Views.WeatherView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:NowBar.App.Controls">
+  <Grid Margin="18,12,18,14">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- 상단: 지역 + 업데이트 시간 -->
+    <StackPanel Orientation="Horizontal" Margin="0,2,76,0">
+      <c:Icon Kind="MapPin" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
+      <TextBlock Text="{Binding LocationText}" Style="{StaticResource Text.Strong}" Margin="6,0,0,0" MaxWidth="230"/>
+      <TextBlock Text="{Binding UpdatedText}" Margin="10,0,0,0" MaxWidth="150">
+        <TextBlock.Style>
+          <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding HasError}" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
+                <Setter Property="ToolTip" Value="{Binding ErrorMessage}"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </TextBlock.Style>
+      </TextBlock>
+    </StackPanel>
+
+    <!-- 지역 미설정 -->
+    <StackPanel Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center"
+                Visibility="{Binding HasLocation, Converter={StaticResource InvBoolToVis}}">
+      <TextBlock Text="날씨를 표시할 지역이 설정되지 않았습니다." Style="{StaticResource Text.Base}" HorizontalAlignment="Center"/>
+      <TextBlock Text="위치는 자동으로 수집하지 않습니다. 설정에서 지역을 검색해 선택하세요." Style="{StaticResource Text.Sub}"
+                 HorizontalAlignment="Center" Margin="0,4,0,0"/>
+      <Button Content="지역 설정 열기" Style="{StaticResource Button.Pill}" Command="{Binding OpenSettingsCommand}"
+              HorizontalAlignment="Center" Margin="0,12,0,0"/>
+    </StackPanel>
+
+    <!-- 데이터 없음(로딩/오류) -->
+    <StackPanel Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center"
+                Visibility="{Binding ShowPlaceholder, Converter={StaticResource BoolToVis}}">
+      <TextBlock Text="{Binding PlaceholderText}" Style="{StaticResource Text.Base}" HorizontalAlignment="Center"/>
+      <Button Style="{StaticResource Button.Pill}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0">
+        <StackPanel Orientation="Horizontal">
+          <c:Icon Kind="Refresh" Width="14" Height="14" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center"/>
+          <TextBlock Text="다시 시도" Style="{StaticResource Text.Base}" Margin="6,0,0,0"/>
+        </StackPanel>
+      </Button>
+    </StackPanel>
+
+    <!-- 중앙: 큰 아이콘 + 기온 + 상태 -->
+    <Grid Grid.Row="1" VerticalAlignment="Center" Margin="4,0,0,0"
+          Visibility="{Binding HasData, Converter={StaticResource BoolToVis}}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <c:Icon Kind="{Binding IconKind}" Width="56" Height="56" StrokeThickness="1.6"
+              Foreground="{DynamicResource Brush.Weather}" VerticalAlignment="Center"/>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+        <TextBlock Text="{Binding TemperatureText}" Style="{StaticResource Text.Big}"/>
+        <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+          <TextBlock Text="{Binding ConditionText}" Style="{StaticResource Text.Strong}" FontSize="15"/>
+          <TextBlock Text="{Binding FeelsLikeText}" Style="{StaticResource Text.Sub}" Margin="0,2,0,0"/>
+        </StackPanel>
+      </StackPanel>
+    </Grid>
+
+    <!-- 하단: 습도 / 강수 확률 / 최고 / 최저 -->
+    <UniformGrid Grid.Row="2" Columns="4" Margin="-3,0" Visibility="{Binding HasData, Converter={StaticResource BoolToVis}}">
+      <Border Style="{StaticResource Card.Stat}">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <c:Icon Kind="Droplet" Width="12" Height="12" Foreground="{DynamicResource Brush.Music}" VerticalAlignment="Center"/>
+            <TextBlock Text="습도" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{Binding HumidityText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card.Stat}">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <c:Icon Kind="Umbrella" Width="12" Height="12" Foreground="{DynamicResource Brush.Music}" VerticalAlignment="Center"/>
+            <TextBlock Text="{Binding PrecipitationLabel}" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{Binding PrecipitationText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card.Stat}">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <c:Icon Kind="ArrowUp" Width="12" Height="12" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center"/>
+            <TextBlock Text="최고" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{Binding MaxText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card.Stat}">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <c:Icon Kind="ArrowDown" Width="12" Height="12" Foreground="{DynamicResource Brush.Music}" VerticalAlignment="Center"/>
+            <TextBlock Text="최저" Style="{StaticResource Text.Caption}" Margin="5,0,0,0"/>
+          </StackPanel>
+          <TextBlock Text="{Binding MinText}" Style="{StaticResource Text.Strong}" Margin="0,3,0,0"/>
+        </StackPanel>
+      </Border>
+    </UniformGrid>
+  </Grid>
+</UserControl>

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <!-- 시스템 트레이(NotifyIcon) 용도로만 사용 -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>NowBar</AssemblyName>
+    <RootNamespace>NowBar.App</RootNamespace>
+    <Product>NowBar</Product>
+    <Version>1.0.0</Version>
+    <ApplicationIcon>Resources\Icons\nowbar.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Claude Code Hooks 수신용 로컬 HTTP 서버(Kestrel, 127.0.0.1 전용) -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinForms 전역 using이 WPF 타입과 충돌하지 않도록 제거 -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+    <!-- WPF SDK는 Shapes.Path와의 충돌 때문에 System.IO를 기본 제외함 (이 프로젝트는 Shapes를 using하지 않음) -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Icons\nowbar.ico" />
+  </ItemGroup>
+
+</Project>

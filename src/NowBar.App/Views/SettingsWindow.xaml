@@ -1,0 +1,12 @@
+<Window x:Class="NowBar.App.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:NowBar.App.Views"
+        Title="NowBar 설정"
+        Width="640" Height="760" MinWidth="560" MinHeight="480"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Brush.Window}"
+        FontFamily="{StaticResource UiFont}"
+        Icon="/Resources/Icons/nowbar.ico">
+  <v:SettingsView/>
+</Window>
