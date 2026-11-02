@@ -26,7 +26,7 @@ public sealed class WeatherService
     {
         _http = http ?? new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
         if (!_http.DefaultRequestHeaders.UserAgent.Any())
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("NowBar/1.0 (+Windows desktop widget)");
+            _http.DefaultRequestHeaders.UserAgent.ParseAdd($"NowBar/{typeof(WeatherService).Assembly.GetName().Version?.ToString(3) ?? "1"} (+Windows desktop widget)");
         _cachePath = cachePath ?? AppPaths.WeatherCacheFile;
     }
 
