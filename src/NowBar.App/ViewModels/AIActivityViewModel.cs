@@ -119,6 +119,10 @@ public partial class AIActivityViewModel : ObservableObject, IDisposable
     /// </summary>
     public bool IsWorking => Sessions.Any(s => s.State is ClaudeTaskState.Working or ClaudeTaskState.ToolRunning && !s.IsStale);
 
+    /// <summary>대표 세션이 최근 90초 안에 완료(또는 오류로 종료)됐는지. 얼굴 표정(기쁨/오류)을 잠깐 보여줄 때 사용.</summary>
+    public bool RecentlyFinished =>
+        _tracker.GetPrimary() is { CompletedAt: { } done } && DateTimeOffset.Now - done < TimeSpan.FromSeconds(90);
+
     public string CompactText
     {
         get
@@ -280,6 +284,7 @@ public partial class AIActivityViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(ShowSessionChips));
         OnPropertyChanged(nameof(AggregateState));
         OnPropertyChanged(nameof(IsWorking));
+        OnPropertyChanged(nameof(RecentlyFinished));
         OnPropertyChanged(nameof(CompactText));
         OnPropertyChanged(nameof(ConnectionText));
         OnPropertyChanged(nameof(EmptyText));

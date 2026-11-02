@@ -2,7 +2,7 @@
   NowBar 스타일 — Spotify 영감 디자인 시스템
   · 거의 검정에 가까운 단계별 표면 (#121212 → #181818 → #1f1f1f)
   · 강조색은 단 하나(기본 #1ed760)이며 활성 상태·재생·주요 동작에만 사용
-  · 모든 버튼은 알약(pill) 모양, 재생 버튼은 원형
+  · 버튼·칩·입력칸은 모서리가 둥근 직사각형(8px), 아이콘·재생 버튼은 원형
   · 굵기는 Bold(700) / Regular(400) 이분법, 크기는 10~24px 범위의 촘촘한 타이포
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -161,7 +161,7 @@
     </Setter>
   </Style>
 
-  <!-- 어두운 알약 버튼 (보조 동작) -->
+  <!-- 어두운 둥근 직사각형 버튼 (보조 동작) -->
   <Style x:Key="Button.Pill" TargetType="Button">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
@@ -177,10 +177,10 @@
       <Setter.Value>
         <ControlTemplate TargetType="Button">
           <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999" RenderTransformOrigin="0.5,0.5">
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" RenderTransformOrigin="0.5,0.5">
             
             <Grid>
-              <Border x:Name="Overlay" Background="Transparent" CornerRadius="999"/>
+              <Border x:Name="Overlay" Background="Transparent" CornerRadius="7"/>
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
             </Grid>
           </Border>
@@ -202,14 +202,14 @@
     </Setter>
   </Style>
 
-  <!-- 테두리만 있는 알약 버튼 -->
+  <!-- 테두리만 있는 버튼 -->
   <Style x:Key="Button.Outline" TargetType="Button" BasedOn="{StaticResource Button.Pill}">
     <Setter Property="Background" Value="Transparent"/>
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Outline}"/>
     <Setter Property="BorderThickness" Value="1"/>
   </Style>
 
-  <!-- 주요 동작: 강조색 알약 + 검정 글자 -->
+  <!-- 주요 동작: 강조색 배경 + 검정 글자 -->
   <Style x:Key="Button.Primary" TargetType="Button" BasedOn="{StaticResource Button.Pill}">
     <Setter Property="Background" Value="{DynamicResource Brush.Accent}"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.OnAccent}"/>
@@ -225,7 +225,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd" Background="Transparent" CornerRadius="999" Margin="2,7">
+          <Border x:Name="Bd" Background="Transparent" CornerRadius="8" Margin="2,7">
             <Grid>
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,0"/>
               <Border x:Name="Indicator" Height="3" Width="16" CornerRadius="2" VerticalAlignment="Bottom"
@@ -260,7 +260,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="Button">
-          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="999" Padding="12,4">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="12,4">
             <ContentPresenter VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>
@@ -358,7 +358,7 @@
   </Style>
 
   <!-- ── 입력 컨트롤 ──────────────────────────────────── -->
-  <!-- 알약 입력칸: 어두운 표면 + 안쪽 회색 테두리, 포커스 시 흰 테두리 -->
+  <!-- 입력칸: 어두운 표면 + 회색 테두리, 포커스 시 흰 테두리 -->
   <Style x:Key="Input.Text" TargetType="TextBox">
     <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
@@ -376,7 +376,7 @@
       <Setter.Value>
         <ControlTemplate TargetType="TextBox">
           <Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="999" Padding="{TemplateBinding Padding}">
+                  BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
             <ScrollViewer x:Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center"
                           HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
           </Border>
@@ -450,7 +450,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="RadioButton">
-          <Border x:Name="Bd" Background="{DynamicResource Brush.Surface}" CornerRadius="999" Padding="12,5">
+          <Border x:Name="Bd" Background="{DynamicResource Brush.Surface}" CornerRadius="8" Padding="12,5">
             <ContentPresenter VerticalAlignment="Center"/>
           </Border>
           <ControlTemplate.Triggers>

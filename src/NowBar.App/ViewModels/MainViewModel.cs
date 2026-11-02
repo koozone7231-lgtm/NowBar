@@ -48,6 +48,59 @@ public partial class MainViewModel : ObservableObject
         SettingsPanel = settingsPanel;
         SettingsPanel.CloseRequested += (_, _) => TryCloseSettings();
         _selectedTab = Settings.LastSelectedTab; // 마지막으로 선택한 탭 복원 (최초 실행 시 날씨)
+
+        // 얼굴 표정은 AI 작업·음악 상태에서 정해진다
+        AI.PropertyChanged += (_, _) => RaiseFace();
+        Music.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(MusicViewModel.IsPlaying) or nameof(MusicViewModel.State) or "") RaiseFace();
+        };
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(AppSettings.CompactDisplay)) OnPropertyChanged(nameof(IsFaceMode));
+        };
+    }
+
+    // ── 얼굴 모드 ────────────────────────────────────────
+    public bool IsFaceMode => Settings.CompactDisplay == CompactDisplay.Face;
+
+    /// <summary>
+    /// 우선순위: 응답 필요 → 작업 중 → (방금) 오류 → 음악 감상 → (방금) 완료 → 평소.
+    /// 사용자가 행동해야 하는 상태가 가장 먼저 보이도록 한다.
+    /// </summary>
+    public Controls.FaceMood FaceMood
+    {
+        get
+        {
+            var ai = AI.AggregateState;
+            if (ai == ClaudeTaskState.Waiting) return Controls.FaceMood.Waiting;
+            if (AI.IsWorking) return Controls.FaceMood.Working;
+            if (ai == ClaudeTaskState.Error && AI.RecentlyFinished) return Controls.FaceMood.Error;
+            if (Music.IsPlaying) return Controls.FaceMood.Music;
+            if (ai == ClaudeTaskState.Completed && AI.RecentlyFinished) return Controls.FaceMood.Happy;
+            return Controls.FaceMood.Idle;
+        }
+    }
+
+    public string FaceStatusText => FaceMood switch
+    {
+        Controls.FaceMood.Waiting => "Claude가 응답을 기다리고 있어요",
+        Controls.FaceMood.Working => "Claude가 작업 중이에요",
+        Controls.FaceMood.Error => "Claude 작업 중 오류가 났어요",
+        Controls.FaceMood.Music => $"음악 감상 중 · {Music.DisplayTitle}",
+        Controls.FaceMood.Happy => "Claude 작업이 끝났어요",
+        _ => "NowBar",
+    };
+
+    private Controls.FaceMood _lastMood;
+
+    private void RaiseFace()
+    {
+        var mood = FaceMood;
+        if (mood == _lastMood) return; // 매초 갱신되는 AI 상태에도 표정이 바뀔 때만 알린다
+        _lastMood = mood;
+        OnPropertyChanged(nameof(FaceMood));
+        OnPropertyChanged(nameof(FaceStatusText));
     }
 
     partial void OnSelectedTabChanged(NowBarTab value) => Settings.LastSelectedTab = value;

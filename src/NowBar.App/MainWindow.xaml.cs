@@ -100,6 +100,10 @@ public partial class MainWindow : Window
         AnimateIsland(_vm.IsExpanded, animate ? _settings.AnimationMs : 1);
     }
 
+    /// <summary>축소 크기: 얼굴 모드는 얼굴에 맞춘 작은 캡슐, 항목 모드는 설정한 너비.</summary>
+    private double CompactTargetWidth =>
+        _settings.CompactDisplay == CompactDisplay.Face ? AppSettings.FaceCompactWidth : _settings.CompactWidth;
+
     // 확장 크기: 설정이 열려 있으면 설정 패널 크기(더 넓고 높게), 아니면 일반 확장 크기
     private double ExpandedTargetWidth =>
         _vm.IsSettingsOpen ? Math.Max(_settings.ExpandedWidth, AppSettings.SettingsPanelWidth) : _settings.ExpandedWidth;
@@ -116,7 +120,7 @@ public partial class MainWindow : Window
 
     private void AnimateIsland(bool expand, int durationMs)
     {
-        var width = expand ? ExpandedTargetWidth : _settings.CompactWidth;
+        var width = expand ? ExpandedTargetWidth : CompactTargetWidth;
         var height = expand ? ExpandedTargetHeight : _settings.CapsuleHeight;
         var compactRadius = Math.Min(_settings.CornerRadius, _settings.CapsuleHeight / 2);
 
@@ -129,6 +133,7 @@ public partial class MainWindow : Window
             DetailHost.Opacity = expand ? 1 : 0;
             TabsGrid.Opacity = expand ? 1 : 0;
             CompactPill.Opacity = expand ? 0 : 1;
+            CompactPill.Visibility = expand ? Visibility.Hidden : Visibility.Visible;
             SetHitTest(expand);
             SetExpandedPartsVisible(expand);
             return;
@@ -138,6 +143,10 @@ public partial class MainWindow : Window
         {
             Island.CornerRadius = new CornerRadius(_settings.CornerRadius);
             SetExpandedPartsVisible(true);
+        }
+        else
+        {
+            CompactPill.Visibility = Visibility.Visible; // 얼굴이 다시 나타나며 표정 애니메이션 재개
         }
 
         AnimationHelper.Animate(Island, WidthProperty, width, durationMs);
@@ -153,7 +162,11 @@ public partial class MainWindow : Window
         });
         // 항목 하나 ↔ 세 탭 교차 전환
         AnimationHelper.Animate(TabsGrid, OpacityProperty, expand ? 1 : 0, expand ? durationMs : fadeOut);
-        AnimationHelper.Animate(CompactPill, OpacityProperty, expand ? 0 : 1, expand ? fadeOut : durationMs);
+        AnimationHelper.Animate(CompactPill, OpacityProperty, expand ? 0 : 1, expand ? fadeOut : durationMs, completed: () =>
+        {
+            // 펼쳐진 동안에는 축소 내용(얼굴)을 렌더링에서 빼서 표정 애니메이션을 멈춘다
+            if (_vm.IsExpanded) CompactPill.Visibility = Visibility.Hidden;
+        });
         SetHitTest(expand);
     }
 
@@ -336,6 +349,7 @@ public partial class MainWindow : Window
         switch (e.PropertyName)
         {
             case nameof(AppSettings.CompactWidth):
+            case nameof(AppSettings.CompactDisplay):
             case nameof(AppSettings.CapsuleHeight):
             case nameof(AppSettings.ExpandedWidth):
             case nameof(AppSettings.ExpandedHeight):

@@ -6,6 +6,15 @@ public enum AppTheme { Dark, Light }
 
 public enum NowBarTab { Weather, Music, AI }
 
+/// <summary>마우스를 올리지 않았을 때 축소 캡슐에 보여줄 내용.</summary>
+public enum CompactDisplay
+{
+    /// <summary>눈만 있는 얼굴 — 작업 중·음악 감상 등 상태를 표정으로 표현</summary>
+    Face,
+    /// <summary>선택한 탭 하나 (아이콘 + 이름 + 상태)</summary>
+    Item,
+}
+
 /// <summary>
 /// %AppData%\NowBar\settings.json 에 저장되는 사용자 설정.
 /// 속성 변경은 SettingsService가 감지하여 자동 저장한다.
@@ -55,6 +64,8 @@ public partial class AppSettings : ObservableObject
     /// <summary>Claude 작업 중일 때 캡슐 테두리에 은은하게 깜빡이는 글로우 표시.</summary>
     [ObservableProperty] private bool _showWorkingGlow = true;
 
+    [ObservableProperty] private CompactDisplay _compactDisplay = CompactDisplay.Face;
+
     /// <summary>디자인 기본값 마이그레이션 버전 (2 = Spotify 영감 디자인).</summary>
     [ObservableProperty] private int _designVersion;
 
@@ -69,6 +80,9 @@ public partial class AppSettings : ObservableObject
     /// <summary>설정을 열었을 때 확장되는 패널 크기 (탭 영역 포함).</summary>
     public const double SettingsPanelWidth = 540, SettingsPanelHeight = 480;
     public const int CurrentDesignVersion = 2;
+
+    /// <summary>얼굴 모드일 때 축소 캡슐 너비.</summary>
+    public const double FaceCompactWidth = 120;
 
     /// <summary>
     /// 이전 디자인의 기본값을 그대로 쓰고 있으면 새 디자인 기본값으로 바꾼다 (사용자가 직접 바꾼 값은 유지).
@@ -100,6 +114,7 @@ public partial class AppSettings : ObservableObject
         SummaryMaxLength = Math.Clamp(SummaryMaxLength, 10, 120);
         if (string.IsNullOrWhiteSpace(AccentColor)) AccentColor = "#1ED760";
         if (!Enum.IsDefined(Theme)) Theme = AppTheme.Dark;
+        if (!Enum.IsDefined(CompactDisplay)) CompactDisplay = CompactDisplay.Face;
         if (!Enum.IsDefined(LastSelectedTab)) LastSelectedTab = NowBarTab.Weather;
         if (!Enum.IsDefined(TemperatureUnit)) TemperatureUnit = TemperatureUnit.Celsius;
     }

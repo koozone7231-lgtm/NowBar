@@ -6,7 +6,7 @@
   <UserControl.Resources>
     <!-- 상태별 색상 -->
     <Style x:Key="StateBadge" TargetType="Border">
-      <Setter Property="CornerRadius" Value="999"/>
+      <Setter Property="CornerRadius" Value="6"/>
       <Setter Property="Padding" Value="9,2"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.SubText}"/>

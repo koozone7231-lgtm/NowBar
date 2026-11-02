@@ -166,6 +166,16 @@
                 </StackPanel>
               </DockPanel>
               <DockPanel Style="{StaticResource Row}">
+                <TextBlock Text="축소 시 표시" Style="{StaticResource Label}"/>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <RadioButton Content="얼굴" GroupName="Compact" Style="{StaticResource Input.Radio}"
+                               ToolTip="눈만 있는 얼굴이 작업 중·음악 감상 같은 상태를 표정으로 보여줍니다"
+                               IsChecked="{Binding Settings.CompactDisplay, Converter={StaticResource EnumToBool}, ConverterParameter=Face}"/>
+                  <RadioButton Content="선택한 항목" GroupName="Compact" Style="{StaticResource Input.Radio}"
+                               IsChecked="{Binding Settings.CompactDisplay, Converter={StaticResource EnumToBool}, ConverterParameter=Item}"/>
+                </StackPanel>
+              </DockPanel>
+              <DockPanel Style="{StaticResource Row}">
                 <TextBlock Text="배경 불투명도" Style="{StaticResource Label}"/>
                 <TextBlock DockPanel.Dock="Right" Text="{Binding Settings.BackgroundOpacity, StringFormat={}{0:P0}}" Style="{StaticResource Value}"/>
                 <Slider Style="{StaticResource Slider.NowBar}" Minimum="0.5" Maximum="1" TickFrequency="0.02" IsSnapToTickEnabled="True"

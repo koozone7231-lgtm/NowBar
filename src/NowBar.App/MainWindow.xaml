@@ -63,10 +63,14 @@
         </Grid.RowDefinitions>
 
         <Grid ClipToBounds="True">
-        <!-- ── 축소 상태: 선택된 항목 하나만 표시 ── -->
+        <!-- ── 축소 상태: 얼굴(기본) 또는 선택된 항목 하나 ── -->
         <Button x:Name="CompactPill" Style="{StaticResource Button.Bare}" Command="{Binding ExpandCommand}"
                 AutomationProperties.Name="NowBar 펼치기" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
           <Grid>
+          <!-- 얼굴 모드: 눈만 있는 얼굴이 상태를 표정으로 보여준다 -->
+          <c:FaceView x:Name="Face" Mood="{Binding FaceMood}" ToolTip="{Binding FaceStatusText}"
+                      Visibility="{Binding IsFaceMode, Converter={StaticResource BoolToVis}}"/>
+          <Grid Visibility="{Binding IsFaceMode, Converter={StaticResource InvBoolToVis}}">
             <StackPanel Orientation="Horizontal" Visibility="{Binding IsWeatherSelected, Converter={StaticResource BoolToVis}}">
               <c:Icon Kind="{Binding Weather.IconKind}" Width="16" Height="16" Foreground="{DynamicResource Brush.Weather}" VerticalAlignment="Center"/>
               <TextBlock Text="날씨" Style="{StaticResource Text.TabName}" Margin="7,0,0,0"/>
@@ -82,6 +86,7 @@
               <TextBlock Text="AI 작업" Style="{StaticResource Text.TabName}" Margin="7,0,0,0"/>
               <TextBlock Text="{Binding AI.CompactText}" Style="{StaticResource Text.TabStatus}" Margin="7,0,0,0"/>
             </StackPanel>
+          </Grid>
           </Grid>
         </Button>
 
