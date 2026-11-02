@@ -17,6 +17,8 @@ public partial class App : Application
     private StartupService? _startupService;
     private WeatherService? _weatherService;
     private MediaService? _mediaService;
+    private AudioMixerService? _audioMixer;
+    private SystemStatusService? _systemStatus;
     private ClaudeHookServer? _hookServer;
     private ClaudeHooksSetupService? _hooksSetup;
     private TrayIconService? _tray;
@@ -82,10 +84,15 @@ public partial class App : Application
 
             // 탭의 "설정 열기" 버튼은 해당 섹션을 바로 연다
             var weather = new WeatherViewModel(_weatherService, settings, () => OpenSettings(SettingsSection.Weather));
-            var music = new MusicViewModel(_mediaService, settings);
+            _audioMixer = new AudioMixerService();
+            _systemStatus = new SystemStatusService();
+            var mixer = new AudioMixerViewModel(_audioMixer);
+            var status = new SystemStatusViewModel(_systemStatus, settings);
+            var music = new MusicViewModel(_mediaService, settings, mixer);
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
             var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService);
-            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel);
+            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status);
+            status.Start();
 
             ApplyCommandLine(e.Args, _main);
 
@@ -170,6 +177,10 @@ public partial class App : Application
         {
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             _main?.SettingsPanel.Dispose();
+            _main?.Music.Mixer.Dispose();
+            _main?.Status.Dispose();
+            _systemStatus?.Dispose();
+            _audioMixer?.Dispose();
             _window?.Close();
             _main?.Weather.Dispose();
             _main?.Music.Dispose();

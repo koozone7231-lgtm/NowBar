@@ -34,6 +34,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private int _collapseDelayMs = 500;
     [ObservableProperty] private bool _alwaysOnTop = true;
     [ObservableProperty] private bool _hideInFullscreen = true;
+    /// <summary>펼친 패널에 배터리·네트워크 아이콘 표시, 얼굴이 배터리 부족·오프라인에 반응.</summary>
+    [ObservableProperty] private bool _showSystemStatus = true;
 
     // ── 디자인 ────────────────────────────────────────────
     [ObservableProperty] private AppTheme _theme = AppTheme.Dark;

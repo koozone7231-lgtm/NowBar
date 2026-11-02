@@ -18,6 +18,7 @@ public partial class MainViewModel : ObservableObject
     public MusicViewModel Music { get; }
     public AIActivityViewModel AI { get; }
     public SettingsViewModel SettingsPanel { get; }
+    public SystemStatusViewModel Status { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWeatherSelected), nameof(IsMusicSelected), nameof(IsAISelected))]
@@ -38,8 +39,9 @@ public partial class MainViewModel : ObservableObject
     public Func<bool?>? ConfirmUnsavedSettings { get; set; }
 
     public MainViewModel(SettingsService settingsService, WeatherViewModel weather, MusicViewModel music,
-        AIActivityViewModel ai, SettingsViewModel settingsPanel)
+        AIActivityViewModel ai, SettingsViewModel settingsPanel, SystemStatusViewModel status)
     {
+        Status = status;
         _settingsService = settingsService;
         Settings = settingsService.Settings;
         Weather = weather;
@@ -55,17 +57,33 @@ public partial class MainViewModel : ObservableObject
         {
             if (e.PropertyName is nameof(MusicViewModel.IsPlaying) or nameof(MusicViewModel.State) or "") RaiseFace();
         };
+        Status.PropertyChanged += (_, _) => RaiseFace();
+        Music.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MusicViewModel.IsMixerOpen)) UpdateActivity();
+        };
         Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppSettings.CompactDisplay)) OnPropertyChanged(nameof(IsFaceMode));
+            if (e.PropertyName == nameof(AppSettings.ShowSystemStatus)) RaiseFace();
         };
+    }
+
+    // ── 보일 때만 돌리는 갱신 (믹서 1초 폴링, Wi-Fi 신호 15초) ──
+    partial void OnIsExpandedChanged(bool value) => UpdateActivity();
+    partial void OnIsSettingsOpenChanged(bool value) => UpdateActivity();
+
+    private void UpdateActivity()
+    {
+        Music.Mixer.SetActive(IsExpanded && !IsSettingsOpen && IsMusicSelected && Music.IsMixerOpen);
+        Status.SetPanelOpen(IsExpanded);
     }
 
     // ── 얼굴 모드 ────────────────────────────────────────
     public bool IsFaceMode => Settings.CompactDisplay == CompactDisplay.Face;
 
     /// <summary>
-    /// 우선순위: 응답 필요 → 작업 중 → (방금) 오류 → 음악 감상 → (방금) 완료 → 평소.
+    /// 우선순위: 응답 필요 → 작업 중 → (방금) 오류 → 배터리 부족 → 오프라인 → 음악 감상 → (방금) 완료 → 평소.
     /// 사용자가 행동해야 하는 상태가 가장 먼저 보이도록 한다.
     /// </summary>
     public Controls.FaceMood FaceMood
@@ -76,6 +94,8 @@ public partial class MainViewModel : ObservableObject
             if (ai == ClaudeTaskState.Waiting) return Controls.FaceMood.Waiting;
             if (AI.IsWorking) return Controls.FaceMood.Working;
             if (ai == ClaudeTaskState.Error && AI.RecentlyFinished) return Controls.FaceMood.Error;
+            if (Settings.ShowSystemStatus && Status.IsBatteryCritical) return Controls.FaceMood.LowBattery;
+            if (Settings.ShowSystemStatus && Status.IsOffline) return Controls.FaceMood.Offline;
             if (Music.IsPlaying) return Controls.FaceMood.Music;
             if (ai == ClaudeTaskState.Completed && AI.RecentlyFinished) return Controls.FaceMood.Happy;
             return Controls.FaceMood.Idle;
@@ -86,6 +106,8 @@ public partial class MainViewModel : ObservableObject
     {
         Controls.FaceMood.Waiting => "Claude가 응답을 기다리고 있어요",
         Controls.FaceMood.Working => "Claude가 작업 중이에요",
+        Controls.FaceMood.LowBattery => $"배터리가 부족해요 ({Status.BatteryPercent}%)",
+        Controls.FaceMood.Offline => "인터넷에 연결되어 있지 않아요",
         Controls.FaceMood.Error => "Claude 작업 중 오류가 났어요",
         Controls.FaceMood.Music => $"음악 감상 중 · {Music.DisplayTitle}",
         Controls.FaceMood.Happy => "Claude 작업이 끝났어요",
@@ -103,7 +125,11 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(FaceStatusText));
     }
 
-    partial void OnSelectedTabChanged(NowBarTab value) => Settings.LastSelectedTab = value;
+    partial void OnSelectedTabChanged(NowBarTab value)
+    {
+        Settings.LastSelectedTab = value;
+        UpdateActivity();
+    }
 
     partial void OnIsPinnedChanged(bool value)
     {

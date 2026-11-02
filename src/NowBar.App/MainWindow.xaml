@@ -163,6 +163,28 @@
             <!-- 오른쪽 위: 고정 / 설정 (설정 화면에서는 헤더에 자체 버튼이 있으므로 숨김) -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,12,0"
                         Visibility="{Binding IsSettingsOpen, Converter={StaticResource InvBoolToVis}}">
+              <!-- 배터리·네트워크: 작게, 문제 있을 때만 경고색 -->
+              <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0" DataContext="{Binding Status}"
+                          Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
+                <c:NetworkGlyph Kind="{Binding Network}" Bars="{Binding WifiBars}" ToolTip="{Binding NetworkTooltip}"
+                                VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="{Binding BatteryTooltip}"
+                            Background="Transparent" Visibility="{Binding HasBattery, Converter={StaticResource BoolToVis}}">
+                  <c:BatteryGlyph Level="{Binding BatteryPercent}" IsCharging="{Binding IsCharging}" IsLow="{Binding IsBatteryLow}"
+                                  VerticalAlignment="Center"/>
+                  <TextBlock Text="{Binding BatteryText}" Margin="4,0,0,0" FontSize="11.5">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding IsBatteryLow}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </StackPanel>
+              </StackPanel>
               <Button Style="{StaticResource Button.Icon}" Command="{Binding TogglePinCommand}" ToolTip="패널 고정 (ESC: 고정 해제)" AutomationProperties.Name="패널 고정">
                 <c:Icon Kind="Pin" Width="16" Height="16">
                   <c:Icon.Style>

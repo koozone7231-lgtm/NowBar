@@ -20,6 +20,10 @@ public enum FaceMood
     Happy,
     /// <summary>오류: ✕ ✕ 눈</summary>
     Error,
+    /// <summary>배터리 부족: 반쯤 감긴 지친 눈 (경고색)</summary>
+    LowBattery,
+    /// <summary>인터넷 끊김: 작은 점 눈이 두리번거림</summary>
+    Offline,
 }
 
 /// <summary>
@@ -111,6 +115,15 @@ public sealed class FaceView : FrameworkElement
 
             case FaceMood.Error:
                 break;
+
+            case FaceMood.LowBattery:
+                ScheduleBlink();
+                break;
+
+            case FaceMood.Offline:
+                // 어디 갔지? 하듯 천천히 좌우를 살핌
+                Loop(GazeXProperty, -4, 4, 1800);
+                break;
         }
     }
 
@@ -156,7 +169,7 @@ public sealed class FaceView : FrameworkElement
     private void OnBlinkTick()
     {
         _blinkTimer.Stop();
-        if (!IsVisible || Mood is not (FaceMood.Idle or FaceMood.Working or FaceMood.Waiting)) return;
+        if (!IsVisible || Mood is not (FaceMood.Idle or FaceMood.Working or FaceMood.Waiting or FaceMood.LowBattery)) return;
 
         // 눈 깜빡임
         var blink = new DoubleAnimation(1, 0.08, TimeSpan.FromMilliseconds(80))
@@ -223,6 +236,19 @@ public sealed class FaceView : FrameworkElement
                 DrawOpenEye(dc, eyeBrush, rightX, cy, 11);
                 break;
 
+            case FaceMood.LowBattery:
+                // 지쳐서 반쯤 감긴 눈: 아래쪽 절반만 보이고 위는 평평한 눈꺼풀
+                var tired = ResBrush("Brush.Warning", Brushes.Orange);
+                DrawTiredEye(dc, tired, leftX, cy + 3);
+                DrawTiredEye(dc, tired, rightX, cy + 3);
+                break;
+
+            case FaceMood.Offline:
+                var dim = ResBrush("Brush.SubText", Brushes.Gray);
+                dc.DrawEllipse(dim, null, new Point(leftX, cy), 3.5 * Openness, 3.5 * Openness);
+                dc.DrawEllipse(dim, null, new Point(rightX, cy), 3.5 * Openness, 3.5 * Openness);
+                break;
+
             default:
                 DrawOpenEye(dc, eyeBrush, leftX, cy, 17);
                 DrawOpenEye(dc, eyeBrush, rightX, cy, 17);
@@ -237,6 +263,21 @@ public sealed class FaceView : FrameworkElement
         var height = Math.Max(2, fullHeight * Openness);
         var radius = Math.Min(eyeWidth, height) / 2;
         dc.DrawRoundedRectangle(brush, null, new Rect(cx - eyeWidth / 2, cy - height / 2, eyeWidth, height), radius, radius);
+    }
+
+    /// <summary>반쯤 감긴 눈 — 아래가 둥글고 위가 평평한 반원.</summary>
+    private void DrawTiredEye(DrawingContext dc, Brush brush, double cx, double cy)
+    {
+        var h = Math.Max(1.5, 7 * Openness);
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            ctx.BeginFigure(new Point(cx - 5, cy - h / 2), true, true);
+            ctx.LineTo(new Point(cx + 5, cy - h / 2), false, false);
+            ctx.ArcTo(new Point(cx - 5, cy - h / 2), new Size(5, h), 0, false, SweepDirection.Clockwise, false, false);
+        }
+        g.Freeze();
+        dc.DrawGeometry(brush, null, g);
     }
 
     /// <summary>웃는 눈 ◠ — 위로 볼록한 곡선.</summary>

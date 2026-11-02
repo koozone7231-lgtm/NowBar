@@ -38,7 +38,7 @@
     </Grid.RowDefinitions>
 
     <!-- 상단: Claude Code 연결 상태 -->
-    <StackPanel Orientation="Horizontal" Margin="0,2,76,0">
+    <StackPanel Orientation="Horizontal" Margin="0,2,150,0">
       <TextBlock Text="Claude Code" Style="{StaticResource Text.Strong}"/>
       <Ellipse Width="7" Height="7" Margin="10,0,6,0" VerticalAlignment="Center">
         <Ellipse.Style>

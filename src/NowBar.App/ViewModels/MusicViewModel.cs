@@ -53,8 +53,22 @@ public partial class MusicViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string? _message = "음악을 재생하고 있지 않습니다.";
     [ObservableProperty] private string? _commandError;
 
-    public MusicViewModel(MediaService media, AppSettings settings)
+    public AudioMixerViewModel Mixer { get; }
+
+    /// <summary>음악 탭에서 플레이어 대신 오디오 믹서를 보여주는지.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MixerToggleIcon), nameof(MixerToggleTooltip))]
+    private bool _isMixerOpen;
+
+    public string MixerToggleIcon => IsMixerOpen ? "Music" : "Mixer";
+    public string MixerToggleTooltip => IsMixerOpen ? "플레이어로 돌아가기" : "오디오 믹서 (앱별 볼륨)";
+
+    [RelayCommand]
+    private void ToggleMixer() => IsMixerOpen = !IsMixerOpen;
+
+    public MusicViewModel(MediaService media, AppSettings settings, AudioMixerViewModel mixer)
     {
+        Mixer = mixer;
         _media = media;
         _settings = settings;
         _media.AutoSelect = settings.AutoSelectMediaSession;

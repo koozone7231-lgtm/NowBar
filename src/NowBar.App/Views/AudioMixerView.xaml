@@ -1,0 +1,99 @@
+<!--
+  오디오 믹서 (Windows 볼륨 믹서와 같은 대상).
+  맨 위: 전체 볼륨 한 줄 / 아래: 소리를 내는 앱마다 한 줄 (약 4줄이 보이고 나머지는 스크롤)
+-->
+<UserControl x:Class="NowBar.App.Views.AudioMixerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:NowBar.App.Controls">
+  <UserControl.Resources>
+    <!-- 한 줄: [음소거] [앱 아이콘] [이름] [슬라이더] [%] -->
+    <Style x:Key="Mute" TargetType="Button" BasedOn="{StaticResource Button.Icon}">
+      <Setter Property="Width" Value="28"/>
+      <Setter Property="Height" Value="28"/>
+    </Style>
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+
+    <!-- 장치 없음 -->
+    <TextBlock Grid.RowSpan="3" Text="사용 가능한 출력 장치가 없습니다." Style="{StaticResource Text.Sub}" HorizontalAlignment="Center"
+               Visibility="{Binding IsAvailable, Converter={StaticResource InvBoolToVis}}"/>
+
+    <!-- 전체 볼륨 -->
+    <Grid Visibility="{Binding IsAvailable, Converter={StaticResource BoolToVis}}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="32"/>
+        <ColumnDefinition Width="132"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="34"/>
+      </Grid.ColumnDefinitions>
+      <Button Style="{StaticResource Mute}" Command="{Binding ToggleMasterMuteCommand}" ToolTip="전체 음소거" AutomationProperties.Name="전체 음소거">
+        <c:Icon Kind="{Binding MasterIcon}" Width="16" Height="16" Foreground="{DynamicResource Brush.Text}"/>
+      </Button>
+      <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,8,0">
+        <TextBlock Text="전체" Style="{StaticResource Text.Strong}" FontSize="13"/>
+        <TextBlock Text="{Binding DeviceName}" Style="{StaticResource Text.Caption}" ToolTip="{Binding DeviceName}"/>
+      </StackPanel>
+      <Slider Grid.Column="2" Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="100" VerticalAlignment="Center"
+              Value="{Binding MasterVolume}" AutomationProperties.Name="전체 볼륨"/>
+      <TextBlock Grid.Column="3" Text="{Binding MasterVolumeText}" Style="{StaticResource Text.Sub}" HorizontalAlignment="Right"/>
+    </Grid>
+
+    <Rectangle Grid.Row="1" Height="1" Fill="{DynamicResource Brush.Divider}" Margin="0,6"
+               Visibility="{Binding IsAvailable, Converter={StaticResource BoolToVis}}"/>
+
+    <!-- 앱별 볼륨 -->
+    <TextBlock Grid.Row="2" Text="지금 소리를 내는 앱이 없습니다." Style="{StaticResource Text.Sub}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,12,0,0"
+               Visibility="{Binding HasApps, Converter={StaticResource InvBoolToVis}}"/>
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0"
+                  Visibility="{Binding HasApps, Converter={StaticResource BoolToVis}}">
+      <ItemsControl ItemsSource="{Binding Apps}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Grid Height="34">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="32"/>
+                <ColumnDefinition Width="22"/>
+                <ColumnDefinition Width="110"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="34"/>
+              </Grid.ColumnDefinitions>
+              <Button Style="{StaticResource Mute}" Command="{Binding ToggleMuteCommand}" ToolTip="음소거"
+                      AutomationProperties.Name="{Binding Name, StringFormat={}{0} 음소거}">
+                <c:Icon Kind="{Binding MuteIcon}" Width="15" Height="15" Foreground="{DynamicResource Brush.SubText}"/>
+              </Button>
+              <!-- 앱 아이콘 (없으면 스피커 모양) -->
+              <Grid Grid.Column="1" Width="18" Height="18" VerticalAlignment="Center" Margin="2,0,0,0">
+                <Image Source="{Binding Icon}" Visibility="{Binding Icon, Converter={StaticResource NullToVis}}"/>
+                <c:Icon Kind="Music" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}"
+                        Visibility="{Binding Icon, Converter={StaticResource InvNullToVis}}"/>
+              </Grid>
+              <TextBlock Grid.Column="2" Text="{Binding Name}" ToolTip="{Binding Name}" Margin="8,0,8,0">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Base}">
+                    <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
+                    <Style.Triggers>
+                      <!-- 지금 소리를 내는 앱은 흰 글자 -->
+                      <DataTrigger Binding="{Binding IsActive}" Value="True">
+                        <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <Slider Grid.Column="3" Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="100" VerticalAlignment="Center"
+                      Value="{Binding Volume}" AutomationProperties.Name="{Binding Name, StringFormat={}{0} 볼륨}"/>
+              <TextBlock Grid.Column="4" Text="{Binding VolumeText}" Style="{StaticResource Text.Sub}" HorizontalAlignment="Right"/>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

@@ -10,7 +10,7 @@
     </Grid.RowDefinitions>
 
     <!-- 상단: 지역 + 업데이트 시간 -->
-    <StackPanel Orientation="Horizontal" Margin="0,2,76,0">
+    <StackPanel Orientation="Horizontal" Margin="0,2,150,0">
       <c:Icon Kind="MapPin" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding LocationText}" Style="{StaticResource Text.Strong}" Margin="6,0,0,0" MaxWidth="230"/>
       <TextBlock Text="{Binding UpdatedText}" Margin="10,0,0,0" MaxWidth="150">
