@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using NowBar.App.Helpers;
@@ -44,6 +45,7 @@ public partial class MainWindow : Window
         _housekeeping.Tick += (_, _) => Housekeeping();
 
         _vm.PropertyChanged += OnViewModelChanged;
+        _vm.AI.PropertyChanged += OnAIChanged;
         _settings.PropertyChanged += OnSettingsChanged;
         SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
         Closed += (_, _) => Cleanup();
@@ -85,6 +87,8 @@ public partial class MainWindow : Window
         Height = rect.Height;
 
         Island.Margin = new Thickness(0, _settings.TopOffset, 0, 0);
+        WorkingGlow.Margin = Island.Margin;
+        IslandShadow.Margin = Island.Margin;
         TabRow.Height = new GridLength(_settings.CapsuleHeight - 2);
         DetailHost.Width = _settings.ExpandedWidth - 2;
         DetailHost.Height = Math.Max(0, _settings.ExpandedHeight - _settings.CapsuleHeight);
@@ -109,11 +113,15 @@ public partial class MainWindow : Window
             TabsGrid.Opacity = expand ? 1 : 0;
             CompactPill.Opacity = expand ? 0 : 1;
             SetHitTest(expand);
+            SetExpandedPartsVisible(expand);
             return;
         }
 
         if (expand)
+        {
             Island.CornerRadius = new CornerRadius(_settings.CornerRadius);
+            SetExpandedPartsVisible(true);
+        }
 
         AnimationHelper.Animate(Island, WidthProperty, width, durationMs);
         AnimationHelper.Animate(Island, HeightProperty, height, durationMs, completed: () =>
@@ -121,11 +129,22 @@ public partial class MainWindow : Window
             if (!_vm.IsExpanded) Island.CornerRadius = new CornerRadius(compactRadius);
         });
         var fadeOut = Math.Max(1, durationMs / 2);
-        AnimationHelper.Animate(DetailHost, OpacityProperty, expand ? 1 : 0, expand ? durationMs : fadeOut);
+        AnimationHelper.Animate(DetailHost, OpacityProperty, expand ? 1 : 0, expand ? durationMs : fadeOut, completed: () =>
+        {
+            // 축소가 끝나면 보이지 않는 패널을 렌더링에서 제외 (매초 바뀌는 시간 텍스트가 창을 다시 그리지 않도록)
+            if (!_vm.IsExpanded) SetExpandedPartsVisible(false);
+        });
         // 항목 하나 ↔ 세 탭 교차 전환
         AnimationHelper.Animate(TabsGrid, OpacityProperty, expand ? 1 : 0, expand ? durationMs : fadeOut);
         AnimationHelper.Animate(CompactPill, OpacityProperty, expand ? 0 : 1, expand ? fadeOut : durationMs);
         SetHitTest(expand);
+    }
+
+    private void SetExpandedPartsVisible(bool visible)
+    {
+        var v = visible ? Visibility.Visible : Visibility.Hidden;
+        DetailHost.Visibility = v;
+        TabsGrid.Visibility = v;
     }
 
     private void SetHitTest(bool expanded)
@@ -133,6 +152,45 @@ public partial class MainWindow : Window
         DetailHost.IsHitTestVisible = expanded;
         TabsGrid.IsHitTestVisible = expanded;
         CompactPill.IsHitTestVisible = !expanded;
+    }
+
+    // ── Claude 작업 중 글로우 ────────────────────────────
+    private bool _glowOn;
+
+    private void OnAIChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(AIActivityViewModel.IsWorking) or "") UpdateGlow();
+    }
+
+    private void UpdateGlow()
+    {
+        var on = _settings.ShowWorkingGlow && _vm.AI.IsWorking;
+        if (on == _glowOn) return;
+        _glowOn = on;
+
+        if (on)
+        {
+            WorkingGlow.Visibility = Visibility.Visible;
+            // 은은한 호흡 효과. 투명 창은 프레임마다 전체를 다시 그리므로 프레임 수를 낮춰 CPU 사용을 줄인다.
+            var pulse = new DoubleAnimation(0.45, 1.0, TimeSpan.FromMilliseconds(1300))
+            {
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever,
+                EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut },
+            };
+            Timeline.SetDesiredFrameRate(pulse, 20);
+            WorkingGlow.BeginAnimation(OpacityProperty, pulse, HandoffBehavior.SnapshotAndReplace);
+        }
+        else
+        {
+            var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(400));
+            Timeline.SetDesiredFrameRate(fade, 30);
+            fade.Completed += (_, _) =>
+            {
+                if (!_glowOn) WorkingGlow.Visibility = Visibility.Collapsed; // 애니메이션 완전 정지
+            };
+            WorkingGlow.BeginAnimation(OpacityProperty, fade, HandoffBehavior.SnapshotAndReplace);
+        }
     }
 
     // ── 마우스 오버 확장 / 지연 축소 ─────────────────────
@@ -256,6 +314,9 @@ public partial class MainWindow : Window
             case nameof(AppSettings.HideInFullscreen):
                 Housekeeping();
                 break;
+            case nameof(AppSettings.ShowWorkingGlow):
+                UpdateGlow();
+                break;
         }
     }
 
@@ -270,10 +331,26 @@ public partial class MainWindow : Window
         _hiddenForFullscreen = _settings.HideInFullscreen && !_vm.IsPinned && IsFullscreenAppActive();
         UpdateVisibility();
 
-        // 다른 최상위 창(작업 표시줄 등)에 가려지지 않도록 주기적으로 최상위 재지정 (포커스는 가져오지 않음)
-        if (_settings.AlwaysOnTop && IsVisible)
+        // 다른 최상위 창(작업 표시줄 등)에 실제로 가려졌을 때만 최상위 재지정 (포커스는 가져오지 않음).
+        // 매번 재지정하면 투명 창 전체가 다시 그려져 다른 '항상 위' 앱과 함께 있을 때 CPU를 계속 사용한다.
+        if (_settings.AlwaysOnTop && IsVisible && IsCoveredByOtherWindow())
             NativeMethods.SetWindowPos(_hwnd, NativeMethods.HWND_TOPMOST, 0, 0, 0, 0,
                 NativeMethods.SWP_NOMOVE | NativeMethods.SWP_NOSIZE | NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_NOOWNERZORDER);
+    }
+
+    /// <summary>캡슐 중앙 지점의 맨 위 창이 NowBar가 아니면 가려진 것으로 본다.</summary>
+    private bool IsCoveredByOtherWindow()
+    {
+        try
+        {
+            var center = Island.PointToScreen(new Point(Island.ActualWidth / 2, Island.ActualHeight / 2));
+            var hit = NativeMethods.WindowFromPoint(new NativeMethods.POINT { X = (int)center.X, Y = (int)center.Y });
+            return hit != IntPtr.Zero && NativeMethods.GetAncestor(hit, NativeMethods.GA_ROOT) != _hwnd;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     private void UpdateVisibility()
@@ -312,6 +389,7 @@ public partial class MainWindow : Window
         _hoverWatchdog.Stop();
         _housekeeping.Stop();
         _vm.PropertyChanged -= OnViewModelChanged;
+        _vm.AI.PropertyChanged -= OnAIChanged;
         _settings.PropertyChanged -= OnSettingsChanged;
         SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
     }

@@ -39,19 +39,55 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _hookPortText;
     [ObservableProperty] private string? _startupStatus;
 
-    public SettingsViewModel(AppSettings settings, AIActivityViewModel ai, WeatherService weather,
+    private readonly SettingsService _settingsService;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SaveStatusText))]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand), nameof(RevertCommand))]
+    private bool _hasUnsavedChanges;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SaveStatusText))]
+    private DateTime? _lastSavedAt;
+
+    public SettingsViewModel(SettingsService settingsService, AIActivityViewModel ai, WeatherService weather,
         ClaudeHookServer server, ClaudeHooksSetupService setup, StartupService startup)
     {
-        Settings = settings;
+        _settingsService = settingsService;
+        Settings = settingsService.Settings;
         AI = ai;
         _weather = weather;
         _server = server;
         _setup = setup;
         _startup = startup;
-        _hookPortText = settings.HookPort.ToString();
+        _hookPortText = Settings.HookPort.ToString();
         Settings.PropertyChanged += OnSettingsChanged;
+        _settingsService.UnsavedStateChanged += OnUnsavedStateChanged;
         UpdateStartupStatus();
     }
+
+    // ── 저장 / 되돌리기 ──────────────────────────────────
+    public string SaveStatusText =>
+        HasUnsavedChanges ? "저장하지 않은 변경 사항이 있습니다 (미리보기 중)"
+        : LastSavedAt is { } t ? $"저장되었습니다 · {t:HH:mm:ss}"
+        : "모든 설정이 저장되어 있습니다";
+
+    [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
+    private void Save()
+    {
+        _settingsService.CommitEdit();
+        LastSavedAt = DateTime.Now;
+    }
+
+    [RelayCommand(CanExecute = nameof(HasUnsavedChanges))]
+    private void Revert()
+    {
+        _settingsService.RevertEdit();
+        HookPortText = Settings.HookPort.ToString();
+    }
+
+    private void OnUnsavedStateChanged(object? sender, EventArgs e) =>
+        HasUnsavedChanges = _settingsService.HasUnsavedChanges;
 
     public string HookUrl => ClaudeHookServer.BuildUrl(Settings.HookPort);
     public string MaskedToken => TokenGenerator.Mask(Settings.HookToken);
@@ -392,5 +428,9 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
         }
     }
 
-    public void Dispose() => Settings.PropertyChanged -= OnSettingsChanged;
+    public void Dispose()
+    {
+        Settings.PropertyChanged -= OnSettingsChanged;
+        _settingsService.UnsavedStateChanged -= OnUnsavedStateChanged;
+    }
 }

@@ -113,6 +113,12 @@ public partial class AIActivityViewModel : ObservableObject, IDisposable
 
     public ClaudeTaskState AggregateState => _tracker.GetPrimary()?.State ?? ClaudeTaskState.Idle;
 
+    /// <summary>
+    /// 어느 세션이든 Claude가 작업(요청 처리·도구 실행) 중인지. 캡슐 테두리 글로우에 사용.
+    /// 10분 넘게 이벤트가 없는 세션(중단되어 Stop을 못 받은 경우)은 제외한다.
+    /// </summary>
+    public bool IsWorking => Sessions.Any(s => s.State is ClaudeTaskState.Working or ClaudeTaskState.ToolRunning && !s.IsStale);
+
     public string CompactText
     {
         get
@@ -273,6 +279,7 @@ public partial class AIActivityViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasSessions));
         OnPropertyChanged(nameof(ShowSessionChips));
         OnPropertyChanged(nameof(AggregateState));
+        OnPropertyChanged(nameof(IsWorking));
         OnPropertyChanged(nameof(CompactText));
         OnPropertyChanged(nameof(ConnectionText));
         OnPropertyChanged(nameof(EmptyText));

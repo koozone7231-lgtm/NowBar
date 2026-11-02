@@ -152,10 +152,14 @@ public partial class App : Application
             _settingsWindow.Activate();
             return;
         }
-        var vm = new SettingsViewModel(_main.Settings, _main.AI, _weatherService!, _hookServer!, _hooksSetup!, _startupService!);
+        // 설정 창이 열려 있는 동안은 [저장]할 때만 파일에 기록 (편집 세션)
+        _settingsService.BeginEdit();
+        var vm = new SettingsViewModel(_settingsService, _main.AI, _weatherService!, _hookServer!, _hooksSetup!, _startupService!);
         _settingsWindow = new SettingsWindow(vm);
         _settingsWindow.Closed += (_, _) =>
         {
+            // 창의 Closing에서 저장/되돌리기를 이미 결정했으므로 남은 변경은 없다
+            _settingsService.EndEdit(save: false);
             vm.Dispose();
             _settingsWindow = null;
         };

@@ -20,17 +20,32 @@
 
   <!-- 창은 투명(클릭 통과)하고, 실제 UI는 Island 테두리 안에만 있다 -->
   <Grid>
+    <!-- 캡슐 그림자: 별도 레이어로 분리해 캐시 (텍스트·글로우가 바뀔 때마다 그림자를 다시 계산하지 않도록) -->
+    <Border x:Name="IslandShadow"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Width="{Binding ActualWidth, ElementName=Island}"
+            Height="{Binding ActualHeight, ElementName=Island}"
+            CornerRadius="{Binding CornerRadius, ElementName=Island}"
+            Background="{DynamicResource Brush.Island}"
+            IsHitTestVisible="False">
+      <Border.CacheMode>
+        <BitmapCache EnableClearType="False"/>
+      </Border.CacheMode>
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.35" Color="Black"/>
+      </Border.Effect>
+    </Border>
+
+    <!-- 배경은 아래 IslandShadow 레이어가 그린다. Transparent 브러시는 마우스 히트 테스트를 위해 필요 -->
     <Border x:Name="Island"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
-            Background="{DynamicResource Brush.Island}"
+            Background="Transparent"
             BorderBrush="{DynamicResource Brush.Border}"
             BorderThickness="1"
             MouseEnter="Island_MouseEnter"
             MouseLeave="Island_MouseLeave">
-      <Border.Effect>
-        <DropShadowEffect BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.35" Color="Black"/>
-      </Border.Effect>
       <Border.ContextMenu>
         <ContextMenu>
           <MenuItem Header="패널 고정" IsCheckable="True" IsChecked="{Binding IsPinned, Mode=TwoWay}"/>
@@ -157,6 +172,35 @@
           </Grid>
         </Grid>
       </Grid>
+    </Border>
+
+    <!-- Claude 작업 중 테두리 글로우: 캡슐과 같은 위치·크기·모서리로 겹쳐 그린다 (마우스 이벤트는 통과) -->
+    <Border x:Name="WorkingGlow"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Width="{Binding ActualWidth, ElementName=Island}"
+            Height="{Binding ActualHeight, ElementName=Island}"
+            CornerRadius="{Binding CornerRadius, ElementName=Island}"
+            BorderBrush="{DynamicResource Brush.AI}"
+            BorderThickness="2"
+            IsHitTestVisible="False"
+            Opacity="0"
+            Visibility="Collapsed">
+      <!-- 효과(블러/그림자)를 한 번만 그려 캐시 → 깜빡임 애니메이션은 투명도만 바뀌므로 CPU 부담이 작다 -->
+      <Border.CacheMode>
+        <BitmapCache EnableClearType="False" SnapsToDevicePixels="True"/>
+      </Border.CacheMode>
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="22" ShadowDepth="0" Opacity="1"
+                          Color="{Binding BorderBrush.Color, ElementName=WorkingGlow}"/>
+      </Border.Effect>
+      <!-- 안쪽 은은한 광택 (테두리 안쪽 가장자리에 색을 살짝 번지게) -->
+      <Border CornerRadius="{Binding CornerRadius, ElementName=Island}" BorderThickness="3" Margin="-1" Opacity="0.35"
+              BorderBrush="{DynamicResource Brush.AI}">
+        <Border.Effect>
+          <BlurEffect Radius="6"/>
+        </Border.Effect>
+      </Border>
     </Border>
   </Grid>
 </Window>

@@ -46,6 +46,14 @@ internal static class NativeMethods
     public static extern bool GetCursorPos(out POINT point);
 
     [DllImport("user32.dll")]
+    public static extern IntPtr WindowFromPoint(POINT point);
+
+    public const uint GA_ROOT = 2;
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetAncestor(IntPtr hWnd, uint flags);
+
+    [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetForegroundWindow(IntPtr hWnd);
 

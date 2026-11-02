@@ -52,6 +52,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private int _summaryMaxLength = 40;
     [ObservableProperty] private bool _showNotifications = true;
     [ObservableProperty] private bool _showSessions = true;
+    /// <summary>Claude 작업 중일 때 캡슐 테두리에 은은하게 깜빡이는 글로우 표시.</summary>
+    [ObservableProperty] private bool _showWorkingGlow = true;
 
     // ── 상태 ──────────────────────────────────────────────
     [ObservableProperty] private NowBarTab _lastSelectedTab = NowBarTab.Weather;
