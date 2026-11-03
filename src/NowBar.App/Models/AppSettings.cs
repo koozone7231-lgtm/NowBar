@@ -4,7 +4,7 @@ namespace NowBar.App.Models;
 
 public enum AppTheme { Dark, Light }
 
-public enum NowBarTab { Weather, Music, AI }
+public enum NowBarTab { Weather, Music, AI, Tools }
 
 /// <summary>마우스를 올리지 않았을 때 축소 캡슐에 보여줄 내용.</summary>
 public enum CompactDisplay

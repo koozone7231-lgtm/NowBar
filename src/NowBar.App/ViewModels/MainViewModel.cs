@@ -19,10 +19,11 @@ public partial class MainViewModel : ObservableObject
     public AIActivityViewModel AI { get; }
     public SettingsViewModel SettingsPanel { get; }
     public SystemStatusViewModel Status { get; }
+    public ToolsViewModel Tools { get; }
     public UpdateViewModel Update => SettingsPanel.Update;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsWeatherSelected), nameof(IsMusicSelected), nameof(IsAISelected))]
+    [NotifyPropertyChangedFor(nameof(IsWeatherSelected), nameof(IsMusicSelected), nameof(IsAISelected), nameof(IsToolsSelected))]
     private NowBarTab _selectedTab;
 
     [ObservableProperty] private bool _isExpanded;
@@ -32,6 +33,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsWeatherSelected => SelectedTab == NowBarTab.Weather;
     public bool IsMusicSelected => SelectedTab == NowBarTab.Music;
     public bool IsAISelected => SelectedTab == NowBarTab.AI;
+    public bool IsToolsSelected => SelectedTab == NowBarTab.Tools;
 
     /// <summary>
     /// 저장하지 않은 설정이 있을 때 물어보는 함수 (View가 제공).
@@ -40,8 +42,10 @@ public partial class MainViewModel : ObservableObject
     public Func<bool?>? ConfirmUnsavedSettings { get; set; }
 
     public MainViewModel(SettingsService settingsService, WeatherViewModel weather, MusicViewModel music,
-        AIActivityViewModel ai, SettingsViewModel settingsPanel, SystemStatusViewModel status)
+        AIActivityViewModel ai, SettingsViewModel settingsPanel, SystemStatusViewModel status, ToolsViewModel tools)
     {
+        Tools = tools;
+        Tools.PropertyChanged += (_, _) => UpdateActivity();
         Status = status;
         _settingsService = settingsService;
         Settings = settingsService.Settings;
@@ -59,10 +63,6 @@ public partial class MainViewModel : ObservableObject
             if (e.PropertyName is nameof(MusicViewModel.IsPlaying) or nameof(MusicViewModel.State) or "") RaiseFace();
         };
         Status.PropertyChanged += (_, _) => RaiseFace();
-        Music.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(MusicViewModel.IsMixerOpen)) UpdateActivity();
-        };
         Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppSettings.CompactDisplay)) OnPropertyChanged(nameof(IsFaceMode));
@@ -76,7 +76,8 @@ public partial class MainViewModel : ObservableObject
 
     private void UpdateActivity()
     {
-        Music.Mixer.SetActive(IsExpanded && !IsSettingsOpen && IsMusicSelected && Music.IsMixerOpen);
+        // 볼륨 믹서는 도구 탭에서 믹서 섹션이 보일 때만 1초마다 갱신
+        Tools.Mixer.SetActive(IsExpanded && !IsSettingsOpen && IsToolsSelected && Tools.IsMixerSection);
         Status.SetPanelOpen(IsExpanded);
     }
 

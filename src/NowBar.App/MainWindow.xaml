@@ -86,11 +86,16 @@
               <TextBlock Text="AI 작업" Style="{StaticResource Text.TabName}" Margin="7,0,0,0"/>
               <TextBlock Text="{Binding AI.CompactText}" Style="{StaticResource Text.TabStatus}" Margin="7,0,0,0"/>
             </StackPanel>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding IsToolsSelected, Converter={StaticResource BoolToVis}}">
+              <c:Icon Kind="Tool" Width="16" Height="16" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center"/>
+              <TextBlock Text="도구" Style="{StaticResource Text.TabName}" Margin="7,0,0,0"/>
+              <TextBlock Text="볼륨 믹서" Style="{StaticResource Text.TabStatus}" Margin="7,0,0,0"/>
+            </StackPanel>
           </Grid>
           </Grid>
         </Button>
 
-        <!-- ── 확장 상태: 세 탭 (확장 너비로 고정 배치 후 잘라서 표시 → 애니메이션 중 흔들림 없음) ── -->
+        <!-- ── 확장 상태: 네 탭 (확장 너비로 고정 배치 후 잘라서 표시 → 애니메이션 중 흔들림 없음) ── -->
         <Grid x:Name="TabsGrid" HorizontalAlignment="Center" Opacity="0" IsHitTestVisible="False">
           <Grid Margin="6,0">
           <Grid.ColumnDefinitions>
@@ -99,6 +104,9 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <!-- 도구 탭은 상태 글자가 없으므로 필요한 만큼만 차지해 나머지 탭에 공간을 준다 -->
+            <ColumnDefinition Width="Auto" MinWidth="76"/>
           </Grid.ColumnDefinitions>
 
           <Button Grid.Column="0" Style="{StaticResource Button.Tab}" BorderBrush="{DynamicResource Brush.Weather}"
@@ -130,8 +138,19 @@
                   Command="{Binding SelectTabCommand}" CommandParameter="{x:Static m:NowBarTab.AI}">
             <StackPanel Orientation="Horizontal">
               <c:Icon Kind="Sparkles" Width="16" Height="16" Foreground="{DynamicResource Brush.AI}" VerticalAlignment="Center"/>
-              <TextBlock Text="AI 작업" Style="{StaticResource Text.TabName}" Margin="6,0,0,0"/>
+              <TextBlock Text="AI" Style="{StaticResource Text.TabName}" Margin="6,0,0,0"/>
               <TextBlock Text="{Binding AI.CompactText}" Style="{StaticResource Text.TabStatus}" Margin="6,0,0,0"/>
+            </StackPanel>
+          </Button>
+
+          <Rectangle Grid.Column="5" Width="1" Height="18" Fill="{DynamicResource Brush.Divider}" VerticalAlignment="Center"/>
+
+          <Button Grid.Column="6" Style="{StaticResource Button.Tab}"
+                  Tag="{Binding IsToolsSelected}" ToolTip="도구 (볼륨 믹서)" AutomationProperties.Name="도구"
+                  Command="{Binding SelectTabCommand}" CommandParameter="{x:Static m:NowBarTab.Tools}">
+            <StackPanel Orientation="Horizontal">
+              <c:Icon Kind="Tool" Width="16" Height="16" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center"/>
+              <TextBlock Text="도구" Style="{StaticResource Text.TabName}" Margin="6,0,0,0"/>
             </StackPanel>
           </Button>
           </Grid>
@@ -153,6 +172,9 @@
               </Grid>
               <Grid Visibility="{Binding IsAISelected, Converter={StaticResource BoolToVis}}">
                 <v:AIActivityView DataContext="{Binding AI}"/>
+              </Grid>
+              <Grid Visibility="{Binding IsToolsSelected, Converter={StaticResource BoolToVis}}">
+                <v:ToolsView DataContext="{Binding Tools}"/>
               </Grid>
             </Grid>
 

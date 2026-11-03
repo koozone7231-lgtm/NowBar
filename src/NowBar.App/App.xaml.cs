@@ -91,11 +91,12 @@ public partial class App : Application
             _systemStatus = new SystemStatusService();
             var mixer = new AudioMixerViewModel(_audioMixer);
             var status = new SystemStatusViewModel(_systemStatus, settings);
-            var music = new MusicViewModel(_mediaService, settings, mixer);
+            var music = new MusicViewModel(_mediaService, settings);
+            var tools = new ToolsViewModel(mixer);
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
             var update = new UpdateViewModel(new UpdateService(), settings);
             var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService, update);
-            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status);
+            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status, tools);
             status.Start();
 
             ApplyCommandLine(e.Args, _main);
@@ -133,7 +134,7 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// 선택 옵션: --tab weather|music|ai (시작 탭), --pinned (확장·고정 상태로 시작).
+    /// 선택 옵션: --tab weather|music|ai|tools (시작 탭), --pinned (확장·고정 상태로 시작).
     /// --startup 은 Windows 자동 실행 시 붙는 표시용 인자다.
     /// </summary>
     private static void ApplyCommandLine(string[] args, MainViewModel main)
@@ -147,6 +148,7 @@ public partial class App : Application
                     {
                         "music" => NowBarTab.Music,
                         "ai" => NowBarTab.AI,
+                        "tools" => NowBarTab.Tools,
                         _ => NowBarTab.Weather,
                     };
                     break;
@@ -228,7 +230,7 @@ public partial class App : Application
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
             _main?.Update.Dispose();
             _main?.SettingsPanel.Dispose();
-            _main?.Music.Mixer.Dispose();
+            _main?.Tools.Mixer.Dispose();
             _main?.Status.Dispose();
             _systemStatus?.Dispose();
             _audioMixer?.Dispose();
