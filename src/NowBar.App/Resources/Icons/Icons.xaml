@@ -30,6 +30,12 @@
   <Geometry x:Key="Icon.SkipForward">M5,4 L15,12 L5,20 Z M19,5 V19</Geometry>
   <Geometry x:Key="Icon.Volume">M11,5 L6,9 H2 V15 H6 L11,19 Z M15.54,8.46 A5,5 0 0 1 15.54,15.54 M19.07,4.93 A10,10 0 0 1 19.07,19.07</Geometry>
   <Geometry x:Key="Icon.VolumeX">M11,5 L6,9 H2 V15 H6 L11,19 Z M22,9 L16,15 M16,9 L22,15</Geometry>
+  <Geometry x:Key="Icon.Wifi">M12,20 H12.01 M2,8.82 A15,15 0 0 1 22,8.82 M5,12.86 A10,10 0 0 1 19,12.86 M8.5,16.43 A5,5 0 0 1 15.5,16.43</Geometry>
+  <Geometry x:Key="Icon.Bluetooth">M7,7 L17,17 L12,22 V2 L17,7 L7,17</Geometry>
+  <Geometry x:Key="Icon.Mic">M12,2 A3,3 0 0 0 9,5 V12 A3,3 0 0 0 15,12 V5 A3,3 0 0 0 12,2 Z M19,10 V12 A7,7 0 0 1 5,12 V10 M12,19 V22</Geometry>
+  <Geometry x:Key="Icon.MicOff">M2,2 L22,22 M18.89,13.23 A7,7 0 0 0 19,12 V10 M5,10 V12 A7,7 0 0 0 12,19 V22 M15,9.34 V5 A3,3 0 0 0 9.12,4.26 M9,9 V12 A3,3 0 0 0 14.12,14.12</Geometry>
+  <Geometry x:Key="Icon.Bolt">M13,2 L3,14 H12 L11,22 L21,10 H12 Z</Geometry>
+  <Geometry x:Key="Icon.Lock">M5,11 H19 A2,2 0 0 1 21,13 V20 A2,2 0 0 1 19,22 H5 A2,2 0 0 1 3,20 V13 A2,2 0 0 1 5,11 Z M7,11 V7 A5,5 0 0 1 17,7 V11</Geometry>
   <Geometry x:Key="Icon.Tool">M14.7,6.3 A1,1 0 0 0 14.7,7.7 L16.3,9.3 A1,1 0 0 0 17.7,9.3 L21.47,5.53 A6,6 0 0 1 13.53,13.47 L6.62,20.38 A2.12,2.12 0 0 1 3.62,17.38 L10.53,10.47 A6,6 0 0 1 18.47,2.53 L14.71,6.29 Z</Geometry>
   <Geometry x:Key="Icon.Mixer">M4,21 V14 M4,10 V3 M12,21 V12 M12,8 V3 M20,21 V16 M20,12 V3 M1,14 H7 M9,8 H15 M17,16 H23</Geometry>
   <Geometry x:Key="Icon.ExternalLink">M15,3 H21 V9 M10,14 L21,3 M18,13 V19 A2,2 0 0 1 16,21 H5 A2,2 0 0 1 3,19 V8 A2,2 0 0 1 5,6 H11</Geometry>

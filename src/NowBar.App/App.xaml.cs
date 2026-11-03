@@ -18,6 +18,7 @@ public partial class App : Application
     private WeatherService? _weatherService;
     private MediaService? _mediaService;
     private AudioMixerService? _audioMixer;
+    private QuickSettingsService? _quickSettings;
     private SystemStatusService? _systemStatus;
     private ClaudeHookServer? _hookServer;
     private ClaudeHooksSetupService? _hooksSetup;
@@ -92,7 +93,8 @@ public partial class App : Application
             var mixer = new AudioMixerViewModel(_audioMixer);
             var status = new SystemStatusViewModel(_systemStatus, settings);
             var music = new MusicViewModel(_mediaService, settings);
-            var tools = new ToolsViewModel(mixer);
+            _quickSettings = new QuickSettingsService();
+            var tools = new ToolsViewModel(mixer, new QuickSettingsViewModel(_quickSettings, _audioMixer));
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
             var update = new UpdateViewModel(new UpdateService(), settings);
             var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService, update);
@@ -231,6 +233,8 @@ public partial class App : Application
             _main?.Update.Dispose();
             _main?.SettingsPanel.Dispose();
             _main?.Tools.Mixer.Dispose();
+            _main?.Tools.QuickSettings.Dispose();
+            _quickSettings?.Dispose();
             _main?.Status.Dispose();
             _systemStatus?.Dispose();
             _audioMixer?.Dispose();

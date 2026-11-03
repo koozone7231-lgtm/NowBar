@@ -89,7 +89,7 @@
             <StackPanel Orientation="Horizontal" Visibility="{Binding IsToolsSelected, Converter={StaticResource BoolToVis}}">
               <c:Icon Kind="Tool" Width="16" Height="16" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center"/>
               <TextBlock Text="도구" Style="{StaticResource Text.TabName}" Margin="7,0,0,0"/>
-              <TextBlock Text="볼륨 믹서" Style="{StaticResource Text.TabStatus}" Margin="7,0,0,0"/>
+              <TextBlock Text="빠른 설정" Style="{StaticResource Text.TabStatus}" Margin="7,0,0,0"/>
             </StackPanel>
           </Grid>
           </Grid>
@@ -146,7 +146,7 @@
           <Rectangle Grid.Column="5" Width="1" Height="18" Fill="{DynamicResource Brush.Divider}" VerticalAlignment="Center"/>
 
           <Button Grid.Column="6" Style="{StaticResource Button.Tab}"
-                  Tag="{Binding IsToolsSelected}" ToolTip="도구 (볼륨 믹서)" AutomationProperties.Name="도구"
+                  Tag="{Binding IsToolsSelected}" ToolTip="도구 (빠른 설정 · 볼륨 믹서)" AutomationProperties.Name="도구"
                   Command="{Binding SelectTabCommand}" CommandParameter="{x:Static m:NowBarTab.Tools}">
             <StackPanel Orientation="Horizontal">
               <c:Icon Kind="Tool" Width="16" Height="16" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center"/>

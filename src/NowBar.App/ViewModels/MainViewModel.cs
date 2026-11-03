@@ -77,7 +77,9 @@ public partial class MainViewModel : ObservableObject
     private void UpdateActivity()
     {
         // 볼륨 믹서는 도구 탭에서 믹서 섹션이 보일 때만 1초마다 갱신
-        Tools.Mixer.SetActive(IsExpanded && !IsSettingsOpen && IsToolsSelected && Tools.IsMixerSection);
+        var toolsVisible = IsExpanded && !IsSettingsOpen && IsToolsSelected;
+        Tools.Mixer.SetActive(toolsVisible && Tools.IsMixerSection);
+        Tools.QuickSettings.SetActive(toolsVisible && Tools.IsQuickSettingsSection);
         Status.SetPanelOpen(IsExpanded);
     }
 
