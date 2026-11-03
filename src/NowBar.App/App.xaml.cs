@@ -41,9 +41,16 @@ public partial class App : Application
         {
             _mutex.Dispose();
             _mutex = null;
+            // 이미 실행 중: 조용히 끝내면 "실행이 안 된다"로 보이므로 실행 중인 NowBar를 불러낸다
+            if (!afterUpdate && !SignalRunningInstance())
+            {
+                MessageBox.Show("NowBar가 이미 실행 중입니다.\n화면 위쪽 가운데의 캡슐이나 작업 표시줄 알림 영역의 NowBar 아이콘을 확인하세요.",
+                    "NowBar", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
             Shutdown();
             return;
         }
+        ListenForSecondLaunch();
 
         // 예외가 발생해도 앱 전체가 종료되지 않도록 처리
         DispatcherUnhandledException += OnDispatcherUnhandledException;
@@ -167,6 +174,35 @@ public partial class App : Application
         }
     }
 
+    private const string ActivateEventName = @"Local\NowBar.Activate";
+    private EventWaitHandle? _activateEvent;
+    private RegisteredWaitHandle? _activateWait;
+
+    /// <summary>두 번째로 실행된 NowBar가 보내는 신호를 기다린다.</summary>
+    private void ListenForSecondLaunch()
+    {
+        _activateEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ActivateEventName);
+        _activateWait = ThreadPool.RegisterWaitForSingleObject(_activateEvent,
+            (_, _) => Dispatcher.BeginInvoke(OnSecondLaunch), null, Timeout.Infinite, executeOnlyOnce: false);
+    }
+
+    /// <summary>실행 중인 NowBar에 신호를 보낸다. 받을 쪽이 없으면(이 기능이 없는 이전 버전) false.</summary>
+    private static bool SignalRunningInstance()
+    {
+        if (!EventWaitHandle.TryOpenExisting(ActivateEventName, out var handle)) return false;
+        using (handle) return handle.Set();
+    }
+
+    /// <summary>다른 NowBar 실행 시도: 숨겨져 있으면 다시 보이고, 잠깐 펼쳐서 위치를 알려 준다.</summary>
+    private void OnSecondLaunch()
+    {
+        if (_window is null || _main is null || _exiting) return;
+        Logger.Info("두 번째 실행 시도 → 실행 중인 NowBar 표시");
+        if (_window.UserHidden) ToggleVisible();
+        _window.Peek();
+        _tray?.ShowNotice("NowBar가 이미 실행 중입니다", "화면 위쪽 가운데에 있습니다. 하나만 실행할 수 있습니다.");
+    }
+
     /// <summary>--after-update {pid}: 이전 버전이 종료될 때까지(최대 15초) 기다린다.</summary>
     private static bool WaitForPreviousVersion(string[] args)
     {
@@ -262,6 +298,8 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _tray?.Dispose();
+        _activateWait?.Unregister(null);
+        _activateEvent?.Dispose();
         _settingsService?.Dispose(); // 대기 중인 설정 저장
         if (_mutex is not null)
         {

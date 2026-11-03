@@ -232,6 +232,23 @@ public partial class MainWindow : Window
 
     private void Island_MouseLeave(object sender, MouseEventArgs e) => ScheduleCollapse();
 
+    /// <summary>"여기 있어요" 알림: 잠깐 펼쳤다가, 마우스가 올라와 있지 않으면 다시 접는다.</summary>
+    public void Peek()
+    {
+        // 마우스가 밖에 있으면 감시 타이머가 바로 접으므로 잠깐 고정해 둔다
+        if (_vm.IsPinned) return;
+        _vm.IsPinned = true;
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            if (!_vm.IsPinned) return; // 그 사이 사용자가 직접 고정 해제
+            _vm.IsPinned = false;
+            ScheduleCollapse();
+        };
+        timer.Start();
+    }
+
     private void ScheduleCollapse()
     {
         if (!_vm.IsExpanded || _vm.IsPinned || _vm.IsSettingsOpen) return;
