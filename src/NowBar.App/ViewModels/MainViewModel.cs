@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
     public AIActivityViewModel AI { get; }
     public SettingsViewModel SettingsPanel { get; }
     public SystemStatusViewModel Status { get; }
+    public UpdateViewModel Update => SettingsPanel.Update;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsWeatherSelected), nameof(IsMusicSelected), nameof(IsAISelected))]

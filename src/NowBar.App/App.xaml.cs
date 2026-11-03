@@ -31,6 +31,9 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        // 업데이트 직후: 이전 버전 프로세스가 완전히 끝난 뒤에 시작 (단일 실행 잠금을 넘겨받기 위해)
+        var afterUpdate = WaitForPreviousVersion(e.Args);
+
         _mutex = new Mutex(true, @"Local\NowBar.SingleInstance", out var isFirstInstance);
         if (!isFirstInstance)
         {
@@ -90,7 +93,8 @@ public partial class App : Application
             var status = new SystemStatusViewModel(_systemStatus, settings);
             var music = new MusicViewModel(_mediaService, settings, mixer);
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
-            var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService);
+            var update = new UpdateViewModel(new UpdateService(), settings);
+            var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService, update);
             _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status);
             status.Start();
 
@@ -106,6 +110,14 @@ public partial class App : Application
                 exit: ExitApp);
 
             SystemEvents.PowerModeChanged += OnPowerModeChanged;
+
+            // 자동 업데이트: 사용 중이 아닐 때만 교체·재시작
+            UpdateService.CleanupOldFiles();
+            update.IsIdle = () => !_main.IsExpanded && !_main.IsSettingsOpen && !_main.AI.IsWorking;
+            update.ApplyAndRestart = ApplyUpdateAndRestart;
+            update.Start();
+            if (afterUpdate)
+                _tray.ShowNotice("NowBar 업데이트 완료", $"v{UpdateService.CurrentVersion.ToString(3)}으로 업데이트했습니다.");
 
             await Task.WhenAll(
                 Safe(weather.InitializeAsync(), "날씨 초기화"),
@@ -145,6 +157,44 @@ public partial class App : Application
         }
     }
 
+    /// <summary>--after-update {pid}: 이전 버전이 종료될 때까지(최대 15초) 기다린다.</summary>
+    private static bool WaitForPreviousVersion(string[] args)
+    {
+        var index = Array.FindIndex(args, a => a.Equals("--after-update", StringComparison.OrdinalIgnoreCase));
+        if (index < 0) return false;
+        if (index + 1 < args.Length && int.TryParse(args[index + 1], out var pid))
+        {
+            try
+            {
+                using var previous = System.Diagnostics.Process.GetProcessById(pid);
+                previous.WaitForExit(15000);
+            }
+            catch (ArgumentException)
+            {
+                // 이미 종료됨
+            }
+        }
+        return true;
+    }
+
+    /// <summary>받은 업데이트로 파일을 교체하고 새 버전을 실행한 뒤 종료한다.</summary>
+    private bool ApplyUpdateAndRestart(string downloadedPath)
+    {
+        // 저장하지 않은 설정이 있으면 먼저 물어보고, 취소하면 업데이트하지 않는다
+        if (_main is not null && !_main.TryCloseSettings()) return false;
+
+        var exe = UpdateService.Apply(downloadedPath, UpdateService.DetectInstallKind());
+        Logger.Info("새 버전으로 재시작");
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe)
+        {
+            Arguments = $"--after-update {Environment.ProcessId}",
+            UseShellExecute = false,
+            WorkingDirectory = Path.GetDirectoryName(exe)!,
+        })?.Dispose();
+        ExitApp();
+        return true;
+    }
+
     private static async Task Safe(Task task, string name)
     {
         try { await task; }
@@ -176,6 +226,7 @@ public partial class App : Application
         try
         {
             SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            _main?.Update.Dispose();
             _main?.SettingsPanel.Dispose();
             _main?.Music.Mixer.Dispose();
             _main?.Status.Dispose();

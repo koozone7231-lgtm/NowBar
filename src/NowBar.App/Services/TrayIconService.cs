@@ -55,6 +55,10 @@ public sealed class TrayIconService : IDisposable
         return Drawing.SystemIcons.Application;
     }
 
+    /// <summary>트레이 풍선 알림 (업데이트 완료 등).</summary>
+    public void ShowNotice(string title, string text) =>
+        _icon.ShowBalloonTip(4000, title, text, Forms.ToolTipIcon.Info);
+
     public void Dispose()
     {
         _icon.Visible = false;

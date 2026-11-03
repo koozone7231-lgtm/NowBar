@@ -53,9 +53,12 @@ public partial class SettingsViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(SaveStatusText))]
     private DateTime? _lastSavedAt;
 
+    public UpdateViewModel Update { get; }
+
     public SettingsViewModel(SettingsService settingsService, AIActivityViewModel ai, WeatherService weather,
-        ClaudeHookServer server, ClaudeHooksSetupService setup, StartupService startup)
+        ClaudeHookServer server, ClaudeHooksSetupService setup, StartupService startup, UpdateViewModel update)
     {
+        Update = update;
         _settingsService = settingsService;
         Settings = settingsService.Settings;
         AI = ai;

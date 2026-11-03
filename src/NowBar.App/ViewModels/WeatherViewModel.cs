@@ -78,7 +78,7 @@ public partial class WeatherViewModel : ObservableObject, IDisposable
     {
         get
         {
-            if (IsLoading && Data is null) return "불러오는 중…";
+            if (IsLoading) return Data is null ? "불러오는 중…" : "업데이트 중…";
             if (Data is null) return HasError ? "업데이트 실패" : "";
             var time = Data.FetchedAt.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture);
             return HasError ? $"업데이트 실패 · {time} 데이터" : $"{time} 업데이트";

@@ -90,6 +90,42 @@
 
         <!-- ── 일반 ── -->
         <StackPanel Visibility="{Binding IsGeneralSection, Converter={StaticResource BoolToVis}}">
+          <!-- 업데이트 -->
+          <Border Style="{StaticResource Card}" DataContext="{Binding Update}">
+            <StackPanel>
+              <DockPanel Style="{StaticResource Row}">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Content="확인" Style="{StaticResource Button.Pill}" Command="{Binding CheckNowCommand}" ToolTip="지금 새 버전 확인"/>
+                  <Button Content="지금 업데이트" Style="{StaticResource Button.Primary}" Command="{Binding InstallNowCommand}" Margin="6,0,0,0"
+                          Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVis}}"/>
+                </StackPanel>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Style="{StaticResource Text.Strong}">
+                    <Run Text="NowBar"/> <Run Text="{Binding CurrentVersionText, Mode=OneWay}"/>
+                  </TextBlock>
+                  <TextBlock Text="{Binding StatusText}" Margin="0,2,0,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Caption}">
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding HasUpdate}" Value="True">
+                            <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                </StackPanel>
+              </DockPanel>
+              <CheckBox Content="자동으로 업데이트 확인 (시작 시 · 6시간마다)" IsChecked="{Binding DataContext.Settings.AutoCheckUpdates, RelativeSource={RelativeSource AncestorType=UserControl}}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="새 버전 자동 설치 (NowBar를 쓰지 않을 때 재시작)" IsChecked="{Binding DataContext.Settings.AutoInstallUpdates, RelativeSource={RelativeSource AncestorType=UserControl}}" Style="{StaticResource Input.Check}"/>
+              <DockPanel Style="{StaticResource Row}">
+                <Button DockPanel.Dock="Right" Content="릴리스 노트" Style="{StaticResource Button.Outline}" Command="{Binding OpenReleasePageCommand}"/>
+                <TextBlock Style="{StaticResource Note}" VerticalAlignment="Center">
+                  <Run Text="설치 형태:"/> <Run Text="{Binding InstallKindText, Mode=OneWay}"/> <Run Text="· GitHub 릴리스에서 받고 SHA-256을 확인합니다"/>
+                </TextBlock>
+              </DockPanel>
+            </StackPanel>
+          </Border>
           <Border Style="{StaticResource Card}">
             <StackPanel>
               <CheckBox Content="Windows 시작 시 자동 실행" IsChecked="{Binding Settings.StartWithWindows}" Style="{StaticResource Input.Check}"/>

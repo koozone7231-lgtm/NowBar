@@ -201,7 +201,12 @@
                 </c:Icon>
               </Button>
               <Button Style="{StaticResource Button.Icon}" Command="{Binding OpenSettingsCommand}" ToolTip="설정" AutomationProperties.Name="설정" Margin="2,0,0,0">
-                <c:Icon Kind="Settings" Width="16" Height="16" Foreground="{DynamicResource Brush.SubText}"/>
+                <Grid Width="18" Height="18">
+                  <c:Icon Kind="Settings" Width="16" Height="16" Foreground="{DynamicResource Brush.SubText}"/>
+                  <!-- 새 버전이 있으면 작은 점 -->
+                  <Ellipse Width="6" Height="6" Fill="{DynamicResource Brush.Accent}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                           Visibility="{Binding Update.HasUpdate, Converter={StaticResource BoolToVis}}"/>
+                </Grid>
               </Button>
             </StackPanel>
           </Grid>

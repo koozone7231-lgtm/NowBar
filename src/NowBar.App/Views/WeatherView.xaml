@@ -13,7 +13,7 @@
     <StackPanel Orientation="Horizontal" Margin="0,2,150,0">
       <c:Icon Kind="MapPin" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
       <TextBlock Text="{Binding LocationText}" Style="{StaticResource Text.Strong}" Margin="6,0,0,0" MaxWidth="230"/>
-      <TextBlock Text="{Binding UpdatedText}" Margin="10,0,0,0" MaxWidth="150">
+      <TextBlock Text="{Binding UpdatedText}" Margin="10,0,0,0" MaxWidth="130">
         <TextBlock.Style>
           <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
             <Style.Triggers>
@@ -25,6 +25,12 @@
           </Style>
         </TextBlock.Style>
       </TextBlock>
+      <!-- 수동 업데이트: 누르면 바로 다시 받아온다 (받는 동안은 비활성) -->
+      <Button Style="{StaticResource Button.Icon}" Width="26" Height="26" Margin="4,0,0,0" Command="{Binding RefreshCommand}"
+              ToolTip="지금 날씨 업데이트" AutomationProperties.Name="날씨 업데이트"
+              Visibility="{Binding HasLocation, Converter={StaticResource BoolToVis}}">
+        <c:Icon Kind="Refresh" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}"/>
+      </Button>
     </StackPanel>
 
     <!-- 지역 미설정 -->
