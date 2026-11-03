@@ -134,6 +134,7 @@
               <CheckBox Content="항상 위에 표시" IsChecked="{Binding Settings.AlwaysOnTop}" Style="{StaticResource Input.Check}"/>
               <CheckBox Content="전체 화면 앱(게임·발표) 실행 중이면 숨기기" IsChecked="{Binding Settings.HideInFullscreen}" Style="{StaticResource Input.Check}"/>
               <CheckBox Content="배터리·네트워크 상태 표시 (얼굴도 배터리 부족·오프라인에 반응)" IsChecked="{Binding Settings.ShowSystemStatus}" Style="{StaticResource Input.Check}"/>
+              <CheckBox Content="메모리가 거의 차면 얼굴이 버거워하는 표정 짓기 (95% 이상 30초)" IsChecked="{Binding Settings.FaceReactsToMemory}" Style="{StaticResource Input.Check}"/>
               <CheckBox Content="클립보드 기록 (도구 탭 · 메모리에만 보관, 비밀번호 관리자 내용은 제외)" IsChecked="{Binding Settings.ClipboardHistoryEnabled}" Style="{StaticResource Input.Check}"/>
             </StackPanel>
           </Border>

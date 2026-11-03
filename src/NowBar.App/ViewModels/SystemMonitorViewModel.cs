@@ -145,6 +145,7 @@ public partial class SystemMonitorViewModel : ObservableObject, IDisposable
     private void TrackLoad(double cpu, double memory)
     {
         if (!_settings.ShowSystemStatus) return;
+        _load.IncludeMemory = _settings.FaceReactsToMemory;
         _load.Add(cpu, memory, DateTime.Now);
         SetStrained(_load.IsStrained);
     }

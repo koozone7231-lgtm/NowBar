@@ -36,6 +36,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool _hideInFullscreen = true;
     /// <summary>펼친 패널에 배터리·네트워크 아이콘 표시, 얼굴이 배터리 부족·오프라인에 반응.</summary>
     [ObservableProperty] private bool _showSystemStatus = true;
+    /// <summary>메모리가 거의 찼을 때 얼굴이 버거워하는 표정을 지을지 (8GB PC는 평소에도 높아서 기본 꺼짐).</summary>
+    [ObservableProperty] private bool _faceReactsToMemory;
     /// <summary>도구 탭의 클립보드 기록 (메모리에만 보관, 끄면 감지 자체를 멈추고 기록을 비운다).</summary>
     [ObservableProperty] private bool _clipboardHistoryEnabled = true;
     /// <summary>시작 시와 6시간마다 GitHub 릴리스에서 새 버전 확인.</summary>

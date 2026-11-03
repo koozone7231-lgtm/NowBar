@@ -111,6 +111,12 @@ public sealed class ClipboardAndMonitorTests(ITestOutputHelper output)
         t.Add(95, 50, t0.AddSeconds(100));
         Assert.False(t.IsStrained);
 
+        // 메모리 반응은 기본 꺼짐
+        t.Add(10, 99, t0.AddSeconds(102));
+        Assert.False(t.Add(10, 99, t0.AddSeconds(108)));
+        Assert.False(t.IsStrained);
+        t = new LoadTracker { IncludeMemory = true };
+
         // 메모리: 90%대 초반은 평범한 상태, 95% 이상이 30초 이어져야 부담
         Assert.False(t.Add(10, 93, t0.AddSeconds(110)));
         t.Add(10, 96, t0.AddSeconds(120));

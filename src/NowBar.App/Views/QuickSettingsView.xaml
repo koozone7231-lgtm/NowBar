@@ -1,7 +1,7 @@
 <!--
   빠른 설정 2줄 타일
-  1줄: Wi-Fi · 블루투스 · 마이크(켜짐/음소거) · 다크 모드 (켜기/끄기)
-  2줄: 전원 모드 · 밝기(지원 안 하면 볼륨, 2칸) · 잠금
+  1줄: Wi-Fi · 블루투스 · 다크 모드 (켜기/끄기)
+  2줄: 밝기(지원 안 하면 볼륨, 2칸) · 잠금
   켜진 타일은 강조색 배경 + 검정 글자.
 -->
 <UserControl x:Class="NowBar.App.Views.QuickSettingsView"
@@ -54,7 +54,7 @@
   </UserControl.Resources>
 
   <StackPanel>
-    <UniformGrid Columns="4" Margin="-4,0">
+    <UniformGrid Columns="3" Margin="-4,0">
       <Button Style="{StaticResource Tile}" Margin="4,0" Tag="{Binding WifiOn}" IsEnabled="{Binding WifiAvailable}"
               Command="{Binding ToggleWifiCommand}" AutomationProperties.Name="Wi-Fi" ToolTip="Wi-Fi 켜기/끄기">
         <DockPanel>
@@ -75,16 +75,6 @@
           </StackPanel>
         </DockPanel>
       </Button>
-      <Button Style="{StaticResource Tile}" Margin="4,0" Tag="{Binding MicOn}" IsEnabled="{Binding MicAvailable}"
-              Command="{Binding ToggleMicCommand}" AutomationProperties.Name="마이크" ToolTip="마이크 켜기 / 음소거">
-        <DockPanel>
-          <c:Icon DockPanel.Dock="Top" Kind="{Binding MicIcon}" Width="17" Height="17" HorizontalAlignment="Left"/>
-          <StackPanel VerticalAlignment="Bottom">
-            <TextBlock Text="마이크" Style="{StaticResource TileLabel}"/>
-            <TextBlock Text="{Binding MicText}" Style="{StaticResource TileState}"/>
-          </StackPanel>
-        </DockPanel>
-      </Button>
       <Button Style="{StaticResource Tile}" Margin="4,0" Tag="{Binding DarkMode}"
               Command="{Binding ToggleDarkModeCommand}" AutomationProperties.Name="다크 모드" ToolTip="Windows 다크 모드 켜기/끄기">
         <DockPanel>
@@ -99,23 +89,12 @@
 
     <Grid Margin="-4,8,-4,0">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*"/>
         <ColumnDefinition Width="2*"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Button Style="{StaticResource Tile}" Margin="4,0" Tag="{Binding PowerIsPerformance}" IsEnabled="{Binding PowerAvailable}"
-              Command="{Binding CyclePowerModeCommand}" AutomationProperties.Name="전원 모드" ToolTip="누를 때마다 효율 → 균형 → 성능">
-        <DockPanel>
-          <c:Icon DockPanel.Dock="Top" Kind="Bolt" Width="17" Height="17" HorizontalAlignment="Left"/>
-          <StackPanel VerticalAlignment="Bottom">
-            <TextBlock Text="전원 모드" Style="{StaticResource TileLabel}"/>
-            <TextBlock Text="{Binding PowerText}" Style="{StaticResource TileState}"/>
-          </StackPanel>
-        </DockPanel>
-      </Button>
 
       <!-- 밝기 (내장 디스플레이) / 지원 안 하면 볼륨 -->
-      <Border Grid.Column="1" Margin="4,0" Height="64" CornerRadius="8" Padding="12,8" Background="{DynamicResource Brush.Surface}">
+      <Border Margin="4,0" Height="64" CornerRadius="8" Padding="12,8" Background="{DynamicResource Brush.Surface}">
         <DockPanel>
           <DockPanel DockPanel.Dock="Top">
             <TextBlock DockPanel.Dock="Right" Text="{Binding SliderText}" FontSize="11" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
@@ -127,7 +106,7 @@
         </DockPanel>
       </Border>
 
-      <Button Grid.Column="2" Style="{StaticResource Tile}" Margin="4,0" Command="{Binding LockCommand}"
+      <Button Grid.Column="1" Style="{StaticResource Tile}" Margin="4,0" Command="{Binding LockCommand}"
               AutomationProperties.Name="화면 잠금" ToolTip="지금 화면 잠금 (Win+L)">
         <DockPanel>
           <c:Icon DockPanel.Dock="Top" Kind="Lock" Width="17" Height="17" HorizontalAlignment="Left"/>

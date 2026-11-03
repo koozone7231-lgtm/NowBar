@@ -9,7 +9,7 @@ namespace NowBar.App.ViewModels;
 
 /// <summary>
 /// 도구 탭의 빠른 설정 (2줄 타일).
-/// 1줄: Wi-Fi · 블루투스 · 마이크 · 다크 모드 / 2줄: 전원 모드 · 밝기(또는 볼륨) · 잠금
+/// 1줄: Wi-Fi · 블루투스 · 다크 모드 / 2줄: 밝기(또는 볼륨) · 잠금
 /// 보일 때만 3초마다 다시 읽어 다른 곳에서 바뀐 상태를 반영한다.
 /// </summary>
 public partial class QuickSettingsViewModel : ObservableObject, IDisposable
@@ -24,9 +24,7 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private RadioToggle _wifi = RadioToggle.Missing;
     [ObservableProperty] private RadioToggle _bluetooth = RadioToggle.Missing;
-    [ObservableProperty] private bool? _micMuted;
     [ObservableProperty] private bool _darkMode;
-    [ObservableProperty] private PowerMode _powerMode = PowerMode.Unavailable;
 
     /// <summary>true면 슬라이더가 화면 밝기, false면 (밝기를 지원하지 않는 모니터) 전체 볼륨.</summary>
     [ObservableProperty] private bool _brightnessSupported;
@@ -52,24 +50,7 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
     public bool BluetoothAvailable => Bluetooth != RadioToggle.Missing;
     public string BluetoothText => Bluetooth switch { RadioToggle.On => "켜짐", RadioToggle.Off => "꺼짐", _ => "없음" };
 
-    public bool MicIsMuted => MicMuted == true;
-    /// <summary>다른 타일과 같은 규칙: 마이크가 켜져(음소거 아님) 있으면 강조색.</summary>
-    public bool MicOn => MicMuted == false;
-    public bool MicAvailable => MicMuted is not null;
-    public string MicIcon => MicMuted == true ? "MicOff" : "Mic";
-    public string MicText => MicMuted switch { true => "음소거", false => "켜짐", _ => "없음" };
-
     public string DarkText => DarkMode ? "켜짐" : "꺼짐";
-
-    public bool PowerAvailable => PowerMode != PowerMode.Unavailable;
-    public bool PowerIsPerformance => PowerMode == PowerMode.Performance;
-    public string PowerText => PowerMode switch
-    {
-        PowerMode.Efficiency => "효율",
-        PowerMode.Balanced => "균형",
-        PowerMode.Performance => "성능",
-        _ => "지원 안 함",
-    };
 
     public string SliderLabel => BrightnessSupported ? "밝기" : "볼륨";
     public string SliderIcon => BrightnessSupported ? "Sun" : "Volume";
@@ -77,9 +58,7 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
 
     partial void OnWifiChanged(RadioToggle value) { OnPropertyChanged(nameof(WifiOn)); OnPropertyChanged(nameof(WifiAvailable)); OnPropertyChanged(nameof(WifiText)); }
     partial void OnBluetoothChanged(RadioToggle value) { OnPropertyChanged(nameof(BluetoothOn)); OnPropertyChanged(nameof(BluetoothAvailable)); OnPropertyChanged(nameof(BluetoothText)); }
-    partial void OnMicMutedChanged(bool? value) { OnPropertyChanged(nameof(MicIsMuted)); OnPropertyChanged(nameof(MicOn)); OnPropertyChanged(nameof(MicAvailable)); OnPropertyChanged(nameof(MicIcon)); OnPropertyChanged(nameof(MicText)); }
     partial void OnDarkModeChanged(bool value) => OnPropertyChanged(nameof(DarkText));
-    partial void OnPowerModeChanged(PowerMode value) { OnPropertyChanged(nameof(PowerAvailable)); OnPropertyChanged(nameof(PowerIsPerformance)); OnPropertyChanged(nameof(PowerText)); }
     partial void OnBrightnessSupportedChanged(bool value) { OnPropertyChanged(nameof(SliderLabel)); OnPropertyChanged(nameof(SliderIcon)); }
 
     partial void OnSliderValueChanged(double value)
@@ -115,9 +94,7 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
         {
             Wifi = await _service.GetRadioAsync(RadioKind.WiFi);
             Bluetooth = await _service.GetRadioAsync(RadioKind.Bluetooth);
-            MicMuted = _service.GetMicMuted();
             DarkMode = _service.IsDarkMode();
-            PowerMode = _service.GetPowerMode();
 
             // WMI는 느릴 수 있어 백그라운드에서 읽는다
             var brightness = await Task.Run(_service.GetBrightness);
@@ -158,14 +135,6 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void ToggleMic()
-    {
-        if (!MicAvailable) return;
-        Report(_service.SetMicMuted(!MicIsMuted), "마이크");
-        MicMuted = _service.GetMicMuted();
-    }
-
-    [RelayCommand]
     private void ToggleDarkMode()
     {
         try
@@ -179,14 +148,6 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
             Logger.Error("다크 모드 변경 실패", ex);
         }
         DarkMode = _service.IsDarkMode();
-    }
-
-    [RelayCommand]
-    private void CyclePowerMode()
-    {
-        if (!PowerAvailable) return;
-        Report(_service.SetPowerMode(QuickSettingsService.Next(PowerMode)), "전원 모드");
-        PowerMode = _service.GetPowerMode();
     }
 
     [RelayCommand]

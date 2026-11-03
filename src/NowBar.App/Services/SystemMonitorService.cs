@@ -222,12 +222,15 @@ public sealed class LoadTracker
     public bool IsStrained { get; private set; }
     public bool IsCpuStrained => _cpu.Strained;
 
+    /// <summary>false면 메모리는 보지 않고 CPU만으로 판단한다 (설정 "메모리 부족에도 반응", 기본 꺼짐).</summary>
+    public bool IncludeMemory { get; set; }
+
     /// <summary>값을 넣고, 부담 상태가 바뀌었으면 true.</summary>
     public bool Add(double cpu, double memory, DateTime now)
     {
         _cpu.Add(cpu, now);
         _memory.Add(memory, now);
-        var strained = _cpu.Strained || _memory.Strained;
+        var strained = _cpu.Strained || (IncludeMemory && _memory.Strained);
         if (strained == IsStrained) return false;
         IsStrained = strained;
         return true;

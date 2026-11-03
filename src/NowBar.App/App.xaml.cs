@@ -240,7 +240,6 @@ public partial class App : Application
             _main?.SettingsPanel.Dispose();
             _main?.Tools.Mixer.Dispose();
             _main?.Tools.QuickSettings.Dispose();
-            _quickSettings?.Dispose();
             _main?.Tools.System.Dispose();
             _clipboard?.Dispose();
             _main?.Status.Dispose();
