@@ -111,6 +111,33 @@ public sealed class ClaudeHooksSetupServiceTests : IDisposable
     }
 
     [Fact]
+    public void Reconnect_only_fixes_previously_approved_nowbar_hooks()
+    {
+        File.WriteAllText(SettingsPath, ExistingSettings);
+        var svc = new ClaudeHooksSetupService(SettingsPath);
+
+        // 한 번도 연동하지 않음 → 자동으로 추가하지 않는다
+        Assert.Null(svc.BuildReconnectPlan(Url, "tok-a"));
+
+        svc.Apply(svc.BuildInstallPlan(Url, "tok-a"));
+        // 이미 최신 → 할 일 없음
+        Assert.Null(svc.BuildReconnectPlan(Url, "tok-a"));
+
+        // 토큰·포트가 바뀜 → NowBar 항목만 현재 값으로
+        var newUrl = "http://127.0.0.1:17500/api/claude-hook";
+        var plan = svc.BuildReconnectPlan(newUrl, "tok-b");
+        Assert.NotNull(plan);
+        svc.Apply(plan!);
+        var status = svc.GetStatus(newUrl, "tok-b");
+        Assert.True(status.Installed && status.TokenMatches);
+
+        var root = JsonNode.Parse(File.ReadAllText(SettingsPath))!.AsObject();
+        Assert.Equal("opus", (string?)root["model"]);
+        Assert.Equal("echo mine", (string?)root["hooks"]!["PreToolUse"]![0]!["hooks"]![0]!["command"]);
+        Assert.Null(svc.BuildReconnectPlan(newUrl, "tok-b"));
+    }
+
+    [Fact]
     public void Install_creates_file_when_missing()
     {
         var svc = new ClaudeHooksSetupService(SettingsPath);

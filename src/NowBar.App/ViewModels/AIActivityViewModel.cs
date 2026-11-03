@@ -165,7 +165,31 @@ public partial class AIActivityViewModel : ObservableObject, IDisposable
     public async Task InitializeAsync()
     {
         await RestartServerAsync();
+        ReconnectClaude();
         RefreshHooksStatus();
+    }
+
+    /// <summary>
+    /// 켤 때마다 Claude Code와 다시 연결: 예전에 승인한 NowBar Hook의 포트·토큰이 지금 값과 다르면
+    /// (토큰 재발급, 포트 변경, 다른 위치에서 실행한 NowBar 등) NowBar 항목만 현재 값으로 고친다. 원본은 백업된다.
+    /// 한 번도 연동하지 않았다면 아무것도 하지 않는다 (처음 연동은 설정에서 변경 내용을 보고 승인).
+    /// </summary>
+    public bool ReconnectClaude()
+    {
+        if (!_settings.ClaudeIntegrationEnabled || !_server.IsRunning || string.IsNullOrWhiteSpace(_settings.HookToken)) return false;
+        try
+        {
+            var plan = _setup.BuildReconnectPlan(ClaudeHookServer.BuildUrl(_settings.HookPort), _settings.HookToken);
+            if (plan is null) return false;
+            _setup.Apply(plan);
+            Logger.Info($"Claude Code 자동 재연결: NowBar Hooks를 현재 포트·토큰으로 갱신 ({plan.Changes.Count}개)");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("Claude Code 자동 재연결 실패", ex);
+            return false;
+        }
     }
 
     public async Task RestartServerAsync()

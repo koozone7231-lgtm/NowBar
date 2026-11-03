@@ -224,6 +224,22 @@ public sealed class ClaudeHooksSetupService
         return plan;
     }
 
+    /// <summary>
+    /// 시작할 때마다 하는 자동 재연결용 계획.
+    /// 사용자가 이전에 연동을 승인해 NowBar Hook이 하나라도 있을 때만, NowBar 항목의 URL·토큰을 현재 값으로 맞춘다.
+    /// 아직 연동한 적이 없거나, 이미 최신이거나, 주석 제거처럼 NowBar 항목 밖이 바뀌는 경우는 null (수동 연동으로).
+    /// </summary>
+    public HooksPlan? BuildReconnectPlan(string url, string token)
+    {
+        var status = GetStatus(url, token);
+        if (status.Error is not null || status.MissingEvents.Count == HookEvents.Length) return null;
+        if (status.Installed && status.TokenMatches) return null;
+
+        var plan = BuildInstallPlan(url, token);
+        if (!plan.HasChanges || plan.Warnings.Any(w => w.Contains("주석"))) return null;
+        return plan;
+    }
+
     public HooksPlan BuildRemovePlan()
     {
         var original = File.Exists(SettingsPath) ? File.ReadAllText(SettingsPath) : null;

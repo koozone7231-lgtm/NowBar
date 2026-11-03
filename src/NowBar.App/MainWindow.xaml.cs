@@ -48,6 +48,9 @@ public partial class MainWindow : Window
         _vm.ConfirmUnsavedSettings = AskUnsavedSettings;
         _vm.SettingsPanel.ConfirmPlan = (plan, title) => Views.HooksApprovalWindow.Ask(this, plan, title);
 
+        // 설정이 열린 채로 NowBar 바깥(다른 창·바탕 화면)을 누르면 설정을 닫고 접는다
+        Deactivated += (_, _) => Dispatcher.BeginInvoke(CloseSettingsOnOutsideClick, DispatcherPriority.Background);
+
         _vm.PropertyChanged += OnViewModelChanged;
         _vm.AI.PropertyChanged += OnAIChanged;
         _settings.PropertyChanged += OnSettingsChanged;
@@ -231,6 +234,28 @@ public partial class MainWindow : Window
     }
 
     private void Island_MouseLeave(object sender, MouseEventArgs e) => ScheduleCollapse();
+
+    private bool _closingSettingsOnDeactivate;
+
+    private void CloseSettingsOnOutsideClick()
+    {
+        if (!_vm.IsSettingsOpen || _closingSettingsOnDeactivate || IsActive) return;
+        // 저장 확인 창·연동 승인 창처럼 NowBar가 띄운 창으로 넘어간 경우는 바깥이 아니다
+        NativeMethods.GetWindowThreadProcessId(NativeMethods.GetForegroundWindow(), out var pid);
+        if (pid == Environment.ProcessId) return;
+
+        _closingSettingsOnDeactivate = true;
+        try
+        {
+            // 저장하지 않은 변경이 있으면 물어보고, 취소하면 설정을 그대로 둔다
+            if (!_vm.TryCloseSettings()) return;
+            _vm.CollapseAndUnpin();
+        }
+        finally
+        {
+            _closingSettingsOnDeactivate = false;
+        }
+    }
 
     /// <summary>"여기 있어요" 알림: 잠깐 펼쳤다가, 마우스가 올라와 있지 않으면 다시 접는다.</summary>
     public void Peek()
