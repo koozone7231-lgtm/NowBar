@@ -24,6 +24,8 @@ public enum FaceMood
     LowBattery,
     /// <summary>인터넷 끊김: 작은 점 눈이 두리번거림</summary>
     Offline,
+    /// <summary>과부하(CPU·메모리): 질끈 감은 &gt; &lt; 눈이 떨리고 식은땀이 흐름</summary>
+    Strained,
 }
 
 /// <summary>
@@ -123,6 +125,14 @@ public sealed class FaceView : FrameworkElement
             case FaceMood.Offline:
                 // 어디 갔지? 하듯 천천히 좌우를 살핌
                 Loop(GazeXProperty, -4, 4, 1800);
+                break;
+
+            case FaceMood.Strained:
+                // 힘겨워 부들부들 + 땀방울이 흘러내림
+                Loop(GazeXProperty, -0.8, 0.8, 100);
+                var sweat = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(1600)) { RepeatBehavior = RepeatBehavior.Forever };
+                Timeline.SetDesiredFrameRate(sweat, LoopFps);
+                BeginAnimation(NoteProgressProperty, sweat);
                 break;
         }
     }
@@ -249,6 +259,12 @@ public sealed class FaceView : FrameworkElement
                 dc.DrawEllipse(dim, null, new Point(rightX, cy), 3.5 * Openness, 3.5 * Openness);
                 break;
 
+            case FaceMood.Strained:
+                DrawSquint(dc, eyeBrush, leftX, cy, pointRight: true);
+                DrawSquint(dc, eyeBrush, rightX, cy, pointRight: false);
+                DrawSweat(dc, rightX + 13, cy);
+                break;
+
             default:
                 DrawOpenEye(dc, eyeBrush, leftX, cy, 17);
                 DrawOpenEye(dc, eyeBrush, rightX, cy, 17);
@@ -303,6 +319,42 @@ public sealed class FaceView : FrameworkElement
         const double r = 5.5;
         dc.DrawLine(pen, new Point(cx - r, cy - r), new Point(cx + r, cy + r));
         dc.DrawLine(pen, new Point(cx - r, cy + r), new Point(cx + r, cy - r));
+    }
+
+    /// <summary>질끈 감은 눈: 왼쪽은 &gt;, 오른쪽은 &lt;.</summary>
+    private static void DrawSquint(DrawingContext dc, Brush brush, double cx, double cy, bool pointRight)
+    {
+        var dir = pointRight ? 1 : -1;
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            ctx.BeginFigure(new Point(cx - 5 * dir, cy - 6), false, false);
+            ctx.LineTo(new Point(cx + 5 * dir, cy), true, true);
+            ctx.LineTo(new Point(cx - 5 * dir, cy + 6), true, true);
+        }
+        g.Freeze();
+        dc.DrawGeometry(null, RoundPen(brush, 3.2), g);
+    }
+
+    /// <summary>오른쪽 눈 옆에서 흘러내리는 땀방울 (정보색).</summary>
+    private void DrawSweat(DrawingContext dc, double x, double cy)
+    {
+        var p = NoteProgress;
+        var opacity = p < 0.75 ? 1 : (1 - p) / 0.25;
+        var y = cy - 8 + p * 10;
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            // 위가 뾰족한 물방울
+            ctx.BeginFigure(new Point(x, y - 4.5), true, true);
+            ctx.QuadraticBezierTo(new Point(x + 3.2, y), new Point(x + 2.6, y + 1.6), true, true);
+            ctx.ArcTo(new Point(x - 2.6, y + 1.6), new Size(2.8, 2.8), 0, true, SweepDirection.Clockwise, true, true);
+            ctx.QuadraticBezierTo(new Point(x - 3.2, y), new Point(x, y - 4.5), true, true);
+        }
+        g.Freeze();
+        dc.PushOpacity(opacity);
+        dc.DrawGeometry(ResBrush("Brush.Info", Brushes.SkyBlue), null, g);
+        dc.Pop();
     }
 
     /// <summary>오른쪽 눈 옆에서 떠오르며 사라지는 작은 음표 (강조색).</summary>

@@ -36,6 +36,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool _hideInFullscreen = true;
     /// <summary>펼친 패널에 배터리·네트워크 아이콘 표시, 얼굴이 배터리 부족·오프라인에 반응.</summary>
     [ObservableProperty] private bool _showSystemStatus = true;
+    /// <summary>도구 탭의 클립보드 기록 (메모리에만 보관, 끄면 감지 자체를 멈추고 기록을 비운다).</summary>
+    [ObservableProperty] private bool _clipboardHistoryEnabled = true;
     /// <summary>시작 시와 6시간마다 GitHub 릴리스에서 새 버전 확인.</summary>
     [ObservableProperty] private bool _autoCheckUpdates = true;
     /// <summary>새 버전을 받아 NowBar를 쓰고 있지 않을 때 자동으로 설치·재시작.</summary>

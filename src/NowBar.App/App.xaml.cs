@@ -19,6 +19,7 @@ public partial class App : Application
     private MediaService? _mediaService;
     private AudioMixerService? _audioMixer;
     private QuickSettingsService? _quickSettings;
+    private ClipboardService? _clipboard;
     private SystemStatusService? _systemStatus;
     private ClaudeHookServer? _hookServer;
     private ClaudeHooksSetupService? _hooksSetup;
@@ -94,12 +95,17 @@ public partial class App : Application
             var status = new SystemStatusViewModel(_systemStatus, settings);
             var music = new MusicViewModel(_mediaService, settings);
             _quickSettings = new QuickSettingsService();
-            var tools = new ToolsViewModel(mixer, new QuickSettingsViewModel(_quickSettings, _audioMixer));
+            _clipboard = new ClipboardService();
+            var systemMonitor = new SystemMonitorViewModel(new SystemMonitorService(), settings);
+            var tools = new ToolsViewModel(mixer, new QuickSettingsViewModel(_quickSettings, _audioMixer),
+                new ClipboardViewModel(_clipboard, settings), systemMonitor);
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
             var update = new UpdateViewModel(new UpdateService(), settings);
             var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService, update);
             _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status, tools);
             status.Start();
+            systemMonitor.Start();
+            tools.Clipboard.ApplyEnabled();
 
             ApplyCommandLine(e.Args, _main);
 
@@ -235,6 +241,8 @@ public partial class App : Application
             _main?.Tools.Mixer.Dispose();
             _main?.Tools.QuickSettings.Dispose();
             _quickSettings?.Dispose();
+            _main?.Tools.System.Dispose();
+            _clipboard?.Dispose();
             _main?.Status.Dispose();
             _systemStatus?.Dispose();
             _audioMixer?.Dispose();

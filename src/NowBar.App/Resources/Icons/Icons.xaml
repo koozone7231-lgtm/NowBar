@@ -38,6 +38,12 @@
   <Geometry x:Key="Icon.Lock">M5,11 H19 A2,2 0 0 1 21,13 V20 A2,2 0 0 1 19,22 H5 A2,2 0 0 1 3,20 V13 A2,2 0 0 1 5,11 Z M7,11 V7 A5,5 0 0 1 17,7 V11</Geometry>
   <Geometry x:Key="Icon.Tool">M14.7,6.3 A1,1 0 0 0 14.7,7.7 L16.3,9.3 A1,1 0 0 0 17.7,9.3 L21.47,5.53 A6,6 0 0 1 13.53,13.47 L6.62,20.38 A2.12,2.12 0 0 1 3.62,17.38 L10.53,10.47 A6,6 0 0 1 18.47,2.53 L14.71,6.29 Z</Geometry>
   <Geometry x:Key="Icon.Mixer">M4,21 V14 M4,10 V3 M12,21 V12 M12,8 V3 M20,21 V16 M20,12 V3 M1,14 H7 M9,8 H15 M17,16 H23</Geometry>
+  <Geometry x:Key="Icon.Clipboard">M9,2 H15 A1,1 0 0 1 16,3 V5 A1,1 0 0 1 15,6 H9 A1,1 0 0 1 8,5 V3 A1,1 0 0 1 9,2 Z M16,4 H18 A2,2 0 0 1 20,6 V20 A2,2 0 0 1 18,22 H6 A2,2 0 0 1 4,20 V6 A2,2 0 0 1 6,4 H8</Geometry>
+  <Geometry x:Key="Icon.Search">M19,11 A8,8 0 1 1 3,11 A8,8 0 1 1 19,11 Z M21,21 L16.7,16.7</Geometry>
+  <Geometry x:Key="Icon.Trash">M3,6 H21 M19,6 V20 A2,2 0 0 1 17,22 H7 A2,2 0 0 1 5,20 V6 M8,6 V4 A2,2 0 0 1 10,2 H14 A2,2 0 0 1 16,4 V6</Geometry>
+  <Geometry x:Key="Icon.Cpu">M6,4 H18 A2,2 0 0 1 20,6 V18 A2,2 0 0 1 18,20 H6 A2,2 0 0 1 4,18 V6 A2,2 0 0 1 6,4 Z M9,9 H15 V15 H9 Z M15,2 V4 M15,20 V22 M2,15 H4 M2,9 H4 M20,15 H22 M20,9 H22 M9,2 V4 M9,20 V22</Geometry>
+  <Geometry x:Key="Icon.Memory">M4,7 H20 A1,1 0 0 1 21,8 V16 A1,1 0 0 1 20,17 H4 A1,1 0 0 1 3,16 V8 A1,1 0 0 1 4,7 Z M7,11 V13 M11,11 V13 M15,11 V13 M7,17 V20 M12,17 V20 M17,17 V20</Geometry>
+  <Geometry x:Key="Icon.HardDrive">M22,12 H2 M5.45,5.11 L2,12 V18 A2,2 0 0 0 4,20 H20 A2,2 0 0 0 22,18 V12 L18.55,5.11 A2,2 0 0 0 16.76,4 H7.24 A2,2 0 0 0 5.45,5.11 Z M6,16 H6.01 M10,16 H10.01</Geometry>
   <Geometry x:Key="Icon.ExternalLink">M15,3 H21 V9 M10,14 L21,3 M18,13 V19 A2,2 0 0 1 16,21 H5 A2,2 0 0 1 3,19 V8 A2,2 0 0 1 5,6 H11</Geometry>
 
   <!-- AI -->

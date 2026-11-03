@@ -63,6 +63,10 @@ public partial class MainViewModel : ObservableObject
             if (e.PropertyName is nameof(MusicViewModel.IsPlaying) or nameof(MusicViewModel.State) or "") RaiseFace();
         };
         Status.PropertyChanged += (_, _) => RaiseFace();
+        Tools.System.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SystemMonitorViewModel.IsStrained)) RaiseFace();
+        };
         Settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppSettings.CompactDisplay)) OnPropertyChanged(nameof(IsFaceMode));
@@ -71,7 +75,13 @@ public partial class MainViewModel : ObservableObject
     }
 
     // ── 보일 때만 돌리는 갱신 (믹서 1초 폴링, Wi-Fi 신호 15초) ──
-    partial void OnIsExpandedChanged(bool value) => UpdateActivity();
+    partial void OnIsExpandedChanged(bool value)
+    {
+        // 펼치기 직전에 쓰던 창을 기억해 둔다 (클립보드 Shift+클릭 붙여넣기 대상)
+        if (value && Services.ClipboardService.GetForeignForeground() is var target && target != IntPtr.Zero)
+            Tools.Clipboard.PasteTarget = target;
+        UpdateActivity();
+    }
     partial void OnIsSettingsOpenChanged(bool value) => UpdateActivity();
 
     private void UpdateActivity()
@@ -80,6 +90,8 @@ public partial class MainViewModel : ObservableObject
         var toolsVisible = IsExpanded && !IsSettingsOpen && IsToolsSelected;
         Tools.Mixer.SetActive(toolsVisible && Tools.IsMixerSection);
         Tools.QuickSettings.SetActive(toolsVisible && Tools.IsQuickSettingsSection);
+        Tools.Clipboard.SetActive(toolsVisible && Tools.IsClipboardSection);
+        Tools.System.SetActive(toolsVisible && Tools.IsSystemSection);
         Status.SetPanelOpen(IsExpanded);
     }
 
@@ -87,7 +99,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsFaceMode => Settings.CompactDisplay == CompactDisplay.Face;
 
     /// <summary>
-    /// 우선순위: 응답 필요 → 작업 중 → (방금) 오류 → 배터리 부족 → 오프라인 → 음악 감상 → (방금) 완료 → 평소.
+    /// 우선순위: 응답 필요 → 작업 중 → (방금) 오류 → 배터리 부족 → 오프라인 → 과부하 → 음악 감상 → (방금) 완료 → 평소.
     /// 사용자가 행동해야 하는 상태가 가장 먼저 보이도록 한다.
     /// </summary>
     public Controls.FaceMood FaceMood
@@ -100,6 +112,7 @@ public partial class MainViewModel : ObservableObject
             if (ai == ClaudeTaskState.Error && AI.RecentlyFinished) return Controls.FaceMood.Error;
             if (Settings.ShowSystemStatus && Status.IsBatteryCritical) return Controls.FaceMood.LowBattery;
             if (Settings.ShowSystemStatus && Status.IsOffline) return Controls.FaceMood.Offline;
+            if (Settings.ShowSystemStatus && Tools.System.IsStrained) return Controls.FaceMood.Strained;
             if (Music.IsPlaying) return Controls.FaceMood.Music;
             if (ai == ClaudeTaskState.Completed && AI.RecentlyFinished) return Controls.FaceMood.Happy;
             return Controls.FaceMood.Idle;
@@ -112,6 +125,7 @@ public partial class MainViewModel : ObservableObject
         Controls.FaceMood.Working => "Claude가 작업 중이에요",
         Controls.FaceMood.LowBattery => $"배터리가 부족해요 ({Status.BatteryPercent}%)",
         Controls.FaceMood.Offline => "인터넷에 연결되어 있지 않아요",
+        Controls.FaceMood.Strained => Tools.System.StrainText,
         Controls.FaceMood.Error => "Claude 작업 중 오류가 났어요",
         Controls.FaceMood.Music => $"음악 감상 중 · {Music.DisplayTitle}",
         Controls.FaceMood.Happy => "Claude 작업이 끝났어요",

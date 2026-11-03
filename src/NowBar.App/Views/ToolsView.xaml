@@ -1,5 +1,5 @@
 <!--
-  도구 탭: 위쪽 섹션 칩 (빠른 설정 · 볼륨 믹서 — 클립보드·시스템이 칩으로 추가될 자리)
+  도구 탭: 위쪽 섹션 칩 (빠른 설정 · 클립보드 · 시스템 · 믹서)
   그 아래에 선택한 도구를 보여준다.
 -->
 <UserControl x:Class="NowBar.App.Views.ToolsView"
@@ -17,12 +17,22 @@
     <StackPanel Orientation="Horizontal" Margin="0,2,150,0" VerticalAlignment="Center">
       <Button Content="빠른 설정" Style="{StaticResource Button.Chip}" Tag="{Binding IsQuickSettingsSection}"
               Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:ToolsSection.QuickSettings}"/>
-      <Button Content="볼륨 믹서" Style="{StaticResource Button.Chip}" Tag="{Binding IsMixerSection}"
+      <Button Content="클립보드" Style="{StaticResource Button.Chip}" Tag="{Binding IsClipboardSection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:ToolsSection.Clipboard}"/>
+      <Button Content="시스템" Style="{StaticResource Button.Chip}" Tag="{Binding IsSystemSection}"
+              Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:ToolsSection.System}"/>
+      <Button Content="믹서" Style="{StaticResource Button.Chip}" Tag="{Binding IsMixerSection}" ToolTip="볼륨 믹서"
               Command="{Binding SelectSectionCommand}" CommandParameter="{x:Static vm:ToolsSection.Mixer}"/>
     </StackPanel>
 
     <v:QuickSettingsView Grid.Row="1" Margin="0,10,0,0" DataContext="{Binding QuickSettings}"
                          Visibility="{Binding DataContext.IsQuickSettingsSection, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource BoolToVis}}"/>
+
+    <v:ClipboardView Grid.Row="1" Margin="0,10,0,0" DataContext="{Binding Clipboard}"
+                     Visibility="{Binding DataContext.IsClipboardSection, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource BoolToVis}}"/>
+
+    <v:SystemMonitorView Grid.Row="1" Margin="0,10,0,0" DataContext="{Binding System}"
+                         Visibility="{Binding DataContext.IsSystemSection, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource BoolToVis}}"/>
 
     <v:AudioMixerView Grid.Row="1" Margin="0,10,0,0" DataContext="{Binding Mixer}"
                       Visibility="{Binding DataContext.IsMixerSection, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=1}, Converter={StaticResource BoolToVis}}"/>

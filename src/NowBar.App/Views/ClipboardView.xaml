@@ -1,0 +1,135 @@
+<!--
+  클립보드 기록
+  위: [검색] [일시 정지] [지우기]
+  아래: 최근 복사한 항목 (고정 항목이 위). 클릭 = 다시 복사, Shift+클릭 = 쓰던 창에 바로 붙여넣기.
+  각 줄의 고정·삭제 버튼은 마우스를 올렸을 때만 보인다 (고정된 항목의 핀은 항상).
+-->
+<UserControl x:Class="NowBar.App.Views.ClipboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:c="clr-namespace:NowBar.App.Controls">
+  <UserControl.Resources>
+    <Style x:Key="RowButton" TargetType="Button">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Focusable" Value="False"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="6,0,2,0">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Surface}"/>
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Selected}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Small" TargetType="Button" BasedOn="{StaticResource Button.Icon}">
+      <Setter Property="Width" Value="26"/>
+      <Setter Property="Height" Value="26"/>
+    </Style>
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- 검색 · 일시 정지 · 지우기 (설정에서 기록을 끄면 비활성) -->
+    <DockPanel IsEnabled="{Binding IsEnabled}">
+      <Button DockPanel.Dock="Right" Style="{StaticResource Small}" Command="{Binding ClearCommand}" Margin="2,0,0,0"
+              ToolTip="고정하지 않은 기록 지우기" AutomationProperties.Name="기록 지우기">
+        <c:Icon Kind="Trash" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}"/>
+      </Button>
+      <Button DockPanel.Dock="Right" Style="{StaticResource Small}" Command="{Binding TogglePauseCommand}" Margin="6,0,0,0"
+              ToolTip="{Binding PauseToolTip}" AutomationProperties.Name="{Binding PauseToolTip}">
+        <c:Icon Kind="{Binding PauseIcon}" Width="13" Height="13" Foreground="{DynamicResource Brush.SubText}"/>
+      </Button>
+      <Grid>
+        <TextBox x:Name="SearchBox" Style="{StaticResource Input.Text}" Height="28" Padding="30,0,10,0" FontSize="12"
+                 Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="클립보드 검색"/>
+        <c:Icon Kind="Search" Width="13" Height="13" Margin="11,0,0,0" HorizontalAlignment="Left" IsHitTestVisible="False"
+                Foreground="{DynamicResource Brush.SubText}"/>
+        <TextBlock Text="검색" Margin="31,0,0,0" Style="{StaticResource Text.Caption}" VerticalAlignment="Center" IsHitTestVisible="False">
+          <TextBlock.Visibility>
+            <Binding Path="Text.IsEmpty" ElementName="SearchBox" Converter="{StaticResource BoolToVis}"/>
+          </TextBlock.Visibility>
+        </TextBlock>
+      </Grid>
+    </DockPanel>
+
+    <!-- 빈 목록 -->
+    <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"
+                Visibility="{Binding HasItems, Converter={StaticResource InvBoolToVis}}">
+      <TextBlock Text="{Binding EmptyText}" Style="{StaticResource Text.Sub}" HorizontalAlignment="Center"/>
+      <TextBlock Text="클릭하면 다시 복사 · Shift+클릭하면 바로 붙여넣기" Style="{StaticResource Text.Caption}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="1" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0"
+                  Visibility="{Binding HasItems, Converter={StaticResource BoolToVis}}">
+      <ItemsControl ItemsSource="{Binding Items}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Button Style="{StaticResource RowButton}" Height="32" Click="OnItemClick"
+                    ToolTip="클릭: 복사 · Shift+클릭: 붙여넣기" AutomationProperties.Name="{Binding Preview}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="28"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <!-- 종류 아이콘 또는 이미지 미리보기 -->
+                <Border Width="22" Height="22" CornerRadius="4" ClipToBounds="True" HorizontalAlignment="Left" VerticalAlignment="Center"
+                        Visibility="{Binding Thumbnail, Converter={StaticResource NullToVis}}">
+                  <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                </Border>
+                <c:Icon Kind="{Binding KindIcon}" Width="14" Height="14" HorizontalAlignment="Left" Margin="4,0,0,0"
+                        Foreground="{DynamicResource Brush.SubText}"
+                        Visibility="{Binding Thumbnail, Converter={StaticResource InvNullToVis}}"/>
+                <TextBlock Grid.Column="1" Text="{Binding Preview}" Style="{StaticResource Text.Base}" FontSize="12"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Grid.Column="2" Text="{Binding TimeText}" Style="{StaticResource Text.Caption}" Margin="8,0,4,0" VerticalAlignment="Center"/>
+                <Button x:Name="Pin" Grid.Column="3" Style="{StaticResource Small}" Visibility="Hidden"
+                        Command="{Binding DataContext.TogglePinCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}" ToolTip="고정 (지우기·개수 제한에서 제외)" AutomationProperties.Name="고정">
+                  <c:Icon x:Name="PinIcon" Kind="Pin" Width="13" Height="13" Foreground="{DynamicResource Brush.SubText}"/>
+                </Button>
+                <Button x:Name="Del" Grid.Column="4" Style="{StaticResource Small}" Visibility="Hidden"
+                        Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        CommandParameter="{Binding}" ToolTip="이 항목 삭제" AutomationProperties.Name="삭제">
+                  <c:Icon Kind="X" Width="12" Height="12" Foreground="{DynamicResource Brush.SubText}"/>
+                </Button>
+              </Grid>
+            </Button>
+            <DataTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Pin" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="Del" Property="Visibility" Value="Visible"/>
+              </Trigger>
+              <DataTrigger Binding="{Binding Pinned}">
+                <DataTrigger.Value><sys:Boolean>True</sys:Boolean></DataTrigger.Value>
+                <Setter TargetName="Pin" Property="Visibility" Value="Visible"/>
+                <Setter TargetName="PinIcon" Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+              </DataTrigger>
+            </DataTemplate.Triggers>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <TextBlock Grid.Row="2" Text="{Binding Message}" Style="{StaticResource Text.Caption}" Foreground="{DynamicResource Brush.Warning}"
+               Margin="0,4,0,0" Visibility="{Binding Message, Converter={StaticResource NullToVis}}"/>
+  </Grid>
+</UserControl>
