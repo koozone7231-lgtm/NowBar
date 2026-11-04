@@ -2,7 +2,6 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NowBar.App.Helpers;
-using NowBar.App.Models;
 using NowBar.App.Services;
 using Windows.Devices.Radios;
 
@@ -18,7 +17,6 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
 {
     private readonly QuickSettingsService _service;
     private readonly PowerSaverService _powerSaverService;
-    private readonly AppSettings _settings;
     private readonly Action _openMixer;
     private readonly DispatcherTimer _poll;
     private readonly DispatcherTimer _sliderDebounce;
@@ -39,12 +37,10 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
     /// <summary>볼륨 줄은 믹서의 전체 볼륨·음소거를 그대로 쓴다.</summary>
     public AudioMixerViewModel Mixer { get; }
 
-    public QuickSettingsViewModel(QuickSettingsService service, PowerSaverService powerSaver, AudioMixerViewModel mixer,
-        AppSettings settings, Action openMixer)
+    public QuickSettingsViewModel(QuickSettingsService service, PowerSaverService powerSaver, AudioMixerViewModel mixer, Action openMixer)
     {
         _service = service;
         _powerSaverService = powerSaver;
-        _settings = settings;
         _openMixer = openMixer;
         Mixer = mixer;
         _poll = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(3) };
@@ -168,46 +164,15 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
     private void TogglePowerSaver()
     {
         if (!PowerSaverAvailable) return;
-        var current = _powerSaverService.ReadThresholds();
-        if (current is not { } now)
+        var on = !PowerSaverOn;
+        if (_powerSaverService.SetOn(on))
         {
-            PowerSaver = PowerSaverState.Missing;
-            return;
+            Message = null;
+            Logger.Info(on ? "절전 모드 켬" : "절전 모드 끔");
         }
-        PowerSaverService.Thresholds? remembered = _settings.PowerSaverRestoreAc is { } ac && _settings.PowerSaverRestoreDc is { } dc
-            ? new(ac, dc) : null;
-
-        switch (PowerSaverService.Decide(PowerSaverOn, now, remembered))
+        else
         {
-            case PowerSaverService.Plan.TurnOn on:
-                if (_powerSaverService.WriteThresholds(new(PowerSaverService.Always, PowerSaverService.Always)))
-                {
-                    _settings.PowerSaverRestoreAc = on.Remember.Ac;
-                    _settings.PowerSaverRestoreDc = on.Remember.Dc;
-                    Message = null;
-                    Logger.Info($"절전 모드 켬 (원래 충전 수준 전원 연결 {on.Remember.Ac}%, 배터리 {on.Remember.Dc}%)");
-                }
-                else
-                {
-                    Message = "절전 모드를 켜지 못했습니다.";
-                }
-                break;
-            case PowerSaverService.Plan.TurnOff off:
-                if (_powerSaverService.WriteThresholds(off.Restore))
-                {
-                    _settings.PowerSaverRestoreAc = null;
-                    _settings.PowerSaverRestoreDc = null;
-                    Message = null;
-                    Logger.Info($"절전 모드 끔 (충전 수준 전원 연결 {off.Restore.Ac}%, 배터리 {off.Restore.Dc}%로 되돌림)");
-                }
-                else
-                {
-                    Message = "절전 모드를 끄지 못했습니다.";
-                }
-                break;
-            case PowerSaverService.Plan.HeldByWindows held:
-                Message = $"Windows가 켠 절전 모드입니다 (배터리 {held.Threshold}% 이하 등). Windows 설정에서 끌 수 있어요.";
-                break;
+            Message = on ? "절전 모드를 켜지 못했습니다." : "절전 모드를 끄지 못했습니다.";
         }
         PowerSaver = _powerSaverService.GetState();
     }

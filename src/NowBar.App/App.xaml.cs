@@ -105,7 +105,7 @@ public partial class App : Application
             _clipboard = new ClipboardService();
             var systemMonitor = new SystemMonitorViewModel(new SystemMonitorService(), settings);
             ToolsViewModel? tools = null;
-            var quickSettings = new QuickSettingsViewModel(_quickSettings, new PowerSaverService(), mixer, settings,
+            var quickSettings = new QuickSettingsViewModel(_quickSettings, new PowerSaverService(), mixer,
                 openMixer: () => tools?.SelectSectionCommand.Execute(ToolsSection.Mixer));
             tools = new ToolsViewModel(mixer, quickSettings, new ClipboardViewModel(_clipboard, settings), systemMonitor);
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));

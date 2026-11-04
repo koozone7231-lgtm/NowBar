@@ -9,11 +9,20 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <!-- 상단: 지역 + 업데이트 시간 -->
-    <StackPanel Orientation="Horizontal" Margin="0,2,150,0">
-      <c:Icon Kind="MapPin" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
-      <TextBlock Text="{Binding LocationText}" Style="{StaticResource Text.Strong}" Margin="6,0,0,0" MaxWidth="230"/>
-      <TextBlock Text="{Binding UpdatedText}" Margin="10,0,0,0" MaxWidth="130">
+    <!-- 상단: 지역 + 새로 고침 / 그 아래 줄에 업데이트 시간·실패 안내 (잘리지 않게 한 줄 따로) -->
+    <StackPanel Margin="0,2,150,0">
+      <StackPanel Orientation="Horizontal">
+        <c:Icon Kind="MapPin" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
+        <TextBlock Text="{Binding LocationText}" Style="{StaticResource Text.Strong}" Margin="6,0,0,0" MaxWidth="230" VerticalAlignment="Center"/>
+        <!-- 수동 업데이트: 누르면 바로 다시 받아온다 (받는 동안은 비활성) -->
+        <Button Style="{StaticResource Button.Icon}" Width="22" Height="22" Margin="4,0,0,0" Command="{Binding RefreshCommand}"
+                ToolTip="지금 날씨 업데이트" AutomationProperties.Name="날씨 업데이트"
+                Visibility="{Binding HasLocation, Converter={StaticResource BoolToVis}}">
+          <c:Icon Kind="Refresh" Width="13" Height="13" Foreground="{DynamicResource Brush.SubText}"/>
+        </Button>
+      </StackPanel>
+      <TextBlock Text="{Binding UpdatedText}" Margin="20,0,0,0" FontSize="11" TextTrimming="CharacterEllipsis"
+                 Visibility="{Binding UpdatedText, Converter={StaticResource NullToVis}}">
         <TextBlock.Style>
           <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
             <Style.Triggers>
@@ -25,12 +34,6 @@
           </Style>
         </TextBlock.Style>
       </TextBlock>
-      <!-- 수동 업데이트: 누르면 바로 다시 받아온다 (받는 동안은 비활성) -->
-      <Button Style="{StaticResource Button.Icon}" Width="26" Height="26" Margin="4,0,0,0" Command="{Binding RefreshCommand}"
-              ToolTip="지금 날씨 업데이트" AutomationProperties.Name="날씨 업데이트"
-              Visibility="{Binding HasLocation, Converter={StaticResource BoolToVis}}">
-        <c:Icon Kind="Refresh" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}"/>
-      </Button>
     </StackPanel>
 
     <!-- 지역 미설정 -->

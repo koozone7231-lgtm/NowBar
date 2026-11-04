@@ -40,9 +40,6 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool _faceReactsToMemory;
     /// <summary>도구 탭의 클립보드 기록 (메모리에만 보관, 끄면 감지 자체를 멈추고 기록을 비운다).</summary>
     [ObservableProperty] private bool _clipboardHistoryEnabled = true;
-    /// <summary>빠른 설정에서 절전 모드를 켤 때 기억해 둔 원래 충전 수준 (끌 때 되돌림). 켜져 있지 않으면 null.</summary>
-    [ObservableProperty] private int? _powerSaverRestoreAc;
-    [ObservableProperty] private int? _powerSaverRestoreDc;
     /// <summary>시작 시와 6시간마다 GitHub 릴리스에서 새 버전 확인.</summary>
     [ObservableProperty] private bool _autoCheckUpdates = true;
     /// <summary>새 버전을 받아 NowBar를 쓰고 있지 않을 때 자동으로 설치·재시작.</summary>
