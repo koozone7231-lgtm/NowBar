@@ -423,7 +423,15 @@ public partial class MainWindow : Window
     {
         if (_hwnd == IntPtr.Zero) return;
 
-        _hiddenForFullscreen = _settings.HideInFullscreen && !_vm.IsPinned && !_vm.IsSettingsOpen && IsFullscreenAppActive();
+        var fullscreen = _settings.HideInFullscreen && !_vm.IsPinned && !_vm.IsSettingsOpen
+            ? FullscreenDetector.Check(_hwnd)
+            : default;
+        if (fullscreen.IsFullscreen != _hiddenForFullscreen)
+        {
+            // 어떤 창 때문에 숨었는지 남겨 두면 "안 보인다"는 문의를 확인할 수 있다
+            Logger.Info(fullscreen.IsFullscreen ? $"전체 화면 앱 감지로 숨김: {fullscreen.Reason}" : "전체 화면 앱 종료 → 다시 표시");
+        }
+        _hiddenForFullscreen = fullscreen.IsFullscreen;
         UpdateVisibility();
 
         // 다른 최상위 창(작업 표시줄 등)에 실제로 가려졌을 때만 최상위 재지정 (포커스는 가져오지 않음).
@@ -453,23 +461,9 @@ public partial class MainWindow : Window
         var shouldShow = !_userHidden && !_hiddenForFullscreen;
         if (shouldShow && !IsVisible) Show();
         else if (!shouldShow && IsVisible)
-        {            _vm.CollapseAndUnpin();
+        {
+            _vm.CollapseAndUnpin();
             Hide();
-        }
-    }
-
-    private static bool IsFullscreenAppActive()
-    {
-        try
-        {
-            if (NativeMethods.SHQueryUserNotificationState(out var state) != 0) return false;
-            return state is NativeMethods.UserNotificationState.Busy
-                or NativeMethods.UserNotificationState.RunningD3DFullScreen
-                or NativeMethods.UserNotificationState.PresentationMode;
-        }
-        catch
-        {
-            return false;
         }
     }
 

@@ -20,17 +20,6 @@ internal static class NativeMethods
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
 
-    public enum UserNotificationState
-    {
-        NotPresent = 1,
-        Busy = 2,
-        RunningD3DFullScreen = 3,
-        PresentationMode = 4,
-        AcceptsNotifications = 5,
-        QuietTime = 6,
-        App = 7,
-    }
-
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
 
@@ -74,7 +63,4 @@ internal static class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out int processId);
-
-    [DllImport("shell32.dll")]
-    public static extern int SHQueryUserNotificationState(out UserNotificationState state);
 }
