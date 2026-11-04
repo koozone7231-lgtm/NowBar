@@ -13,7 +13,7 @@
     <Style x:Key="Tile" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
-      <Setter Property="Height" Value="56"/>
+      <Setter Property="Height" Value="64"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Focusable" Value="False"/>
       <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
@@ -98,7 +98,7 @@
     </UniformGrid>
 
     <!-- [해] 밝기 [%] [잠금] — 밝기를 바꿀 수 없는 화면이면 안내 문구 -->
-    <Grid Margin="0,10,0,0" Height="30">
+    <Grid Margin="0,8,0,0" Height="30">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="30"/>
         <ColumnDefinition Width="*"/>
