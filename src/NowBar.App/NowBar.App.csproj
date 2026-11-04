@@ -12,7 +12,7 @@
     <AssemblyName>NowBar</AssemblyName>
     <RootNamespace>NowBar.App</RootNamespace>
     <Product>NowBar</Product>
-    <Version>1.3.1</Version>
+    <Version>1.3.2</Version>
     <ApplicationIcon>Resources\Icons\nowbar.ico</ApplicationIcon>
   </PropertyGroup>
 
