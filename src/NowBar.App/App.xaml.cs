@@ -104,8 +104,10 @@ public partial class App : Application
             _quickSettings = new QuickSettingsService();
             _clipboard = new ClipboardService();
             var systemMonitor = new SystemMonitorViewModel(new SystemMonitorService(), settings);
-            var tools = new ToolsViewModel(mixer, new QuickSettingsViewModel(_quickSettings, _audioMixer),
-                new ClipboardViewModel(_clipboard, settings), systemMonitor);
+            ToolsViewModel? tools = null;
+            var quickSettings = new QuickSettingsViewModel(_quickSettings, new PowerSaverService(), mixer, settings,
+                openMixer: () => tools?.SelectSectionCommand.Execute(ToolsSection.Mixer));
+            tools = new ToolsViewModel(mixer, quickSettings, new ClipboardViewModel(_clipboard, settings), systemMonitor);
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
             var update = new UpdateViewModel(new UpdateService(), settings);
             var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService, update);

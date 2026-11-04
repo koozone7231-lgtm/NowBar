@@ -88,7 +88,8 @@ public partial class MainViewModel : ObservableObject
     {
         // 볼륨 믹서는 도구 탭에서 믹서 섹션이 보일 때만 1초마다 갱신
         var toolsVisible = IsExpanded && !IsSettingsOpen && IsToolsSelected;
-        Tools.Mixer.SetActive(toolsVisible && Tools.IsMixerSection);
+        // 빠른 설정의 볼륨 줄도 믹서의 전체 볼륨을 쓴다
+        Tools.Mixer.SetActive(toolsVisible && (Tools.IsMixerSection || Tools.IsQuickSettingsSection));
         Tools.QuickSettings.SetActive(toolsVisible && Tools.IsQuickSettingsSection);
         Tools.Clipboard.SetActive(toolsVisible && Tools.IsClipboardSection);
         Tools.System.SetActive(toolsVisible && Tools.IsSystemSection);

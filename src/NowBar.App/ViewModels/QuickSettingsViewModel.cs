@@ -2,20 +2,24 @@ using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using NowBar.App.Helpers;
+using NowBar.App.Models;
 using NowBar.App.Services;
 using Windows.Devices.Radios;
 
 namespace NowBar.App.ViewModels;
 
 /// <summary>
-/// 도구 탭의 빠른 설정 (2줄 타일).
-/// 1줄: Wi-Fi · 블루투스 · 다크 모드 / 2줄: 밝기(또는 볼륨) · 잠금
+/// 도구 탭의 빠른 설정.
+/// 1줄: Wi-Fi · 블루투스 · 다크 모드 · 절전 모드 타일
+/// 2줄: 밝기 슬라이더 · 잠금 / 3줄: 볼륨 슬라이더 · 믹서 열기
 /// 보일 때만 3초마다 다시 읽어 다른 곳에서 바뀐 상태를 반영한다.
 /// </summary>
 public partial class QuickSettingsViewModel : ObservableObject, IDisposable
 {
     private readonly QuickSettingsService _service;
-    private readonly AudioMixerService _mixer;
+    private readonly PowerSaverService _powerSaverService;
+    private readonly AppSettings _settings;
+    private readonly Action _openMixer;
     private readonly DispatcherTimer _poll;
     private readonly DispatcherTimer _sliderDebounce;
     private bool _refreshing;
@@ -25,16 +29,24 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
     [ObservableProperty] private RadioToggle _wifi = RadioToggle.Missing;
     [ObservableProperty] private RadioToggle _bluetooth = RadioToggle.Missing;
     [ObservableProperty] private bool _darkMode;
+    [ObservableProperty] private PowerSaverState _powerSaver = PowerSaverState.Missing;
 
-    /// <summary>true면 슬라이더가 화면 밝기, false면 (밝기를 지원하지 않는 모니터) 전체 볼륨.</summary>
+    /// <summary>내장 디스플레이처럼 밝기를 바꿀 수 있는 화면인지 (외장 모니터는 대부분 지원 안 함).</summary>
     [ObservableProperty] private bool _brightnessSupported;
-    [ObservableProperty] private double _sliderValue;
+    [ObservableProperty] private double _brightness;
     [ObservableProperty] private string? _message;
 
-    public QuickSettingsViewModel(QuickSettingsService service, AudioMixerService mixer)
+    /// <summary>볼륨 줄은 믹서의 전체 볼륨·음소거를 그대로 쓴다.</summary>
+    public AudioMixerViewModel Mixer { get; }
+
+    public QuickSettingsViewModel(QuickSettingsService service, PowerSaverService powerSaver, AudioMixerViewModel mixer,
+        AppSettings settings, Action openMixer)
     {
         _service = service;
-        _mixer = mixer;
+        _powerSaverService = powerSaver;
+        _settings = settings;
+        _openMixer = openMixer;
+        Mixer = mixer;
         _poll = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(3) };
         _poll.Tick += async (_, _) => await RefreshAsync();
         _sliderDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
@@ -52,18 +64,20 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
 
     public string DarkText => DarkMode ? "켜짐" : "꺼짐";
 
-    public string SliderLabel => BrightnessSupported ? "밝기" : "볼륨";
-    public string SliderIcon => BrightnessSupported ? "Sun" : "Volume";
-    public string SliderText => $"{Math.Round(SliderValue):0}%";
+    public bool PowerSaverOn => PowerSaver == PowerSaverState.On;
+    public bool PowerSaverAvailable => PowerSaver != PowerSaverState.Missing;
+    public string PowerSaverText => PowerSaver switch { PowerSaverState.On => "켜짐", PowerSaverState.Off => "꺼짐", _ => "없음" };
+
+    public string BrightnessText => $"{Math.Round(Brightness):0}%";
 
     partial void OnWifiChanged(RadioToggle value) { OnPropertyChanged(nameof(WifiOn)); OnPropertyChanged(nameof(WifiAvailable)); OnPropertyChanged(nameof(WifiText)); }
     partial void OnBluetoothChanged(RadioToggle value) { OnPropertyChanged(nameof(BluetoothOn)); OnPropertyChanged(nameof(BluetoothAvailable)); OnPropertyChanged(nameof(BluetoothText)); }
     partial void OnDarkModeChanged(bool value) => OnPropertyChanged(nameof(DarkText));
-    partial void OnBrightnessSupportedChanged(bool value) { OnPropertyChanged(nameof(SliderLabel)); OnPropertyChanged(nameof(SliderIcon)); }
+    partial void OnPowerSaverChanged(PowerSaverState value) { OnPropertyChanged(nameof(PowerSaverOn)); OnPropertyChanged(nameof(PowerSaverAvailable)); OnPropertyChanged(nameof(PowerSaverText)); }
 
-    partial void OnSliderValueChanged(double value)
+    partial void OnBrightnessChanged(double value)
     {
-        OnPropertyChanged(nameof(SliderText));
+        OnPropertyChanged(nameof(BrightnessText));
         if (_syncingSlider) return;
         _lastSliderChange = DateTime.Now;
         // 드래그 중에는 값이 계속 바뀌므로 잠시 멈췄을 때 한 번만 적용
@@ -95,15 +109,15 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
             Wifi = await _service.GetRadioAsync(RadioKind.WiFi);
             Bluetooth = await _service.GetRadioAsync(RadioKind.Bluetooth);
             DarkMode = _service.IsDarkMode();
+            PowerSaver = _powerSaverService.GetState();
 
             // WMI는 느릴 수 있어 백그라운드에서 읽는다
             var brightness = await Task.Run(_service.GetBrightness);
             BrightnessSupported = brightness is not null;
-            if (DateTime.Now - _lastSliderChange > TimeSpan.FromSeconds(1.5))
+            if (brightness is { } value && DateTime.Now - _lastSliderChange > TimeSpan.FromSeconds(1.5))
             {
-                var value = brightness ?? (_mixer.GetMaster() is { } master ? (int)Math.Round(master.Volume * 100) : 0);
                 _syncingSlider = true;
-                SliderValue = value;
+                Brightness = value;
                 _syncingSlider = false;
             }
         }
@@ -151,6 +165,57 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private void TogglePowerSaver()
+    {
+        if (!PowerSaverAvailable) return;
+        var current = _powerSaverService.ReadThresholds();
+        if (current is not { } now)
+        {
+            PowerSaver = PowerSaverState.Missing;
+            return;
+        }
+        PowerSaverService.Thresholds? remembered = _settings.PowerSaverRestoreAc is { } ac && _settings.PowerSaverRestoreDc is { } dc
+            ? new(ac, dc) : null;
+
+        switch (PowerSaverService.Decide(PowerSaverOn, now, remembered))
+        {
+            case PowerSaverService.Plan.TurnOn on:
+                if (_powerSaverService.WriteThresholds(new(PowerSaverService.Always, PowerSaverService.Always)))
+                {
+                    _settings.PowerSaverRestoreAc = on.Remember.Ac;
+                    _settings.PowerSaverRestoreDc = on.Remember.Dc;
+                    Message = null;
+                    Logger.Info($"절전 모드 켬 (원래 충전 수준 전원 연결 {on.Remember.Ac}%, 배터리 {on.Remember.Dc}%)");
+                }
+                else
+                {
+                    Message = "절전 모드를 켜지 못했습니다.";
+                }
+                break;
+            case PowerSaverService.Plan.TurnOff off:
+                if (_powerSaverService.WriteThresholds(off.Restore))
+                {
+                    _settings.PowerSaverRestoreAc = null;
+                    _settings.PowerSaverRestoreDc = null;
+                    Message = null;
+                    Logger.Info($"절전 모드 끔 (충전 수준 전원 연결 {off.Restore.Ac}%, 배터리 {off.Restore.Dc}%로 되돌림)");
+                }
+                else
+                {
+                    Message = "절전 모드를 끄지 못했습니다.";
+                }
+                break;
+            case PowerSaverService.Plan.HeldByWindows held:
+                Message = $"Windows가 켠 절전 모드입니다 (배터리 {held.Threshold}% 이하 등). Windows 설정에서 끌 수 있어요.";
+                break;
+        }
+        PowerSaver = _powerSaverService.GetState();
+    }
+
+    [RelayCommand]
+    private void OpenMixer() => _openMixer();
+
+    [RelayCommand]
     private void Lock()
     {
         if (!QuickSettingsService.Lock()) Message = "화면을 잠그지 못했습니다.";
@@ -158,16 +223,9 @@ public partial class QuickSettingsViewModel : ObservableObject, IDisposable
 
     private async Task ApplySliderAsync()
     {
-        var value = (int)Math.Round(SliderValue);
-        if (BrightnessSupported)
-        {
-            if (!await Task.Run(() => _service.SetBrightness(value))) Message = "밝기를 바꾸지 못했습니다.";
-        }
-        else
-        {
-            try { _mixer.SetMasterVolume(value / 100f); }
-            catch (Exception ex) { Logger.Error("볼륨 변경 실패", ex); }
-        }
+        if (!BrightnessSupported) return;
+        var value = (int)Math.Round(Brightness);
+        if (!await Task.Run(() => _service.SetBrightness(value))) Message = "밝기를 바꾸지 못했습니다.";
     }
 
     private void Report(bool ok, string what) => Message = ok ? null : $"{what}을(를) 바꾸지 못했습니다. Windows 설정에서 허용 여부를 확인하세요.";

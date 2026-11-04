@@ -1,8 +1,8 @@
 <!--
-  빠른 설정 2줄 타일
-  1줄: Wi-Fi · 블루투스 · 다크 모드 (켜기/끄기)
-  2줄: 밝기(지원 안 하면 볼륨, 2칸) · 잠금
-  켜진 타일은 강조색 배경 + 검정 글자.
+  빠른 설정
+  1줄: Wi-Fi · 블루투스 · 다크 모드 · 절전 모드 타일 (켜진 타일은 강조색 배경 + 검정 글자)
+  2줄: [해] 밝기 슬라이더 [%] [잠금]
+  3줄: [음소거] 볼륨 슬라이더 [%] [믹서 열기]
 -->
 <UserControl x:Class="NowBar.App.Views.QuickSettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -13,7 +13,7 @@
     <Style x:Key="Tile" TargetType="Button">
       <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
       <Setter Property="Background" Value="{DynamicResource Brush.Surface}"/>
-      <Setter Property="Height" Value="64"/>
+      <Setter Property="Height" Value="56"/>
       <Setter Property="Cursor" Value="Hand"/>
       <Setter Property="Focusable" Value="False"/>
       <Setter Property="FontFamily" Value="{StaticResource UiFont}"/>
@@ -54,7 +54,7 @@
   </UserControl.Resources>
 
   <StackPanel>
-    <UniformGrid Columns="3" Margin="-4,0">
+    <UniformGrid Columns="4" Margin="-4,0">
       <Button Style="{StaticResource Tile}" Margin="4,0" Tag="{Binding WifiOn}" IsEnabled="{Binding WifiAvailable}"
               Command="{Binding ToggleWifiCommand}" AutomationProperties.Name="Wi-Fi" ToolTip="Wi-Fi 켜기/끄기">
         <DockPanel>
@@ -85,36 +85,60 @@
           </StackPanel>
         </DockPanel>
       </Button>
-    </UniformGrid>
-
-    <Grid Margin="-4,8,-4,0">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="2*"/>
-        <ColumnDefinition Width="*"/>
-      </Grid.ColumnDefinitions>
-
-      <!-- 밝기 (내장 디스플레이) / 지원 안 하면 볼륨 -->
-      <Border Margin="4,0" Height="64" CornerRadius="8" Padding="12,8" Background="{DynamicResource Brush.Surface}">
+      <Button Style="{StaticResource Tile}" Margin="4,0" Tag="{Binding PowerSaverOn}" IsEnabled="{Binding PowerSaverAvailable}"
+              Command="{Binding TogglePowerSaverCommand}" AutomationProperties.Name="절전 모드" ToolTip="Windows 절전 모드 켜기/끄기 (끄면 원래 자동 켜짐 설정으로 되돌림)">
         <DockPanel>
-          <DockPanel DockPanel.Dock="Top">
-            <TextBlock DockPanel.Dock="Right" Text="{Binding SliderText}" FontSize="11" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
-            <c:Icon Kind="{Binding SliderIcon}" Width="17" Height="17" Foreground="{DynamicResource Brush.Text}"/>
-            <TextBlock Text="{Binding SliderLabel}" Margin="6,0,0,0" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Brush.Text}" VerticalAlignment="Center"/>
-          </DockPanel>
-          <Slider Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="100" VerticalAlignment="Bottom"
-                  Value="{Binding SliderValue}" AutomationProperties.Name="{Binding SliderLabel}"/>
-        </DockPanel>
-      </Border>
-
-      <Button Grid.Column="1" Style="{StaticResource Tile}" Margin="4,0" Command="{Binding LockCommand}"
-              AutomationProperties.Name="화면 잠금" ToolTip="지금 화면 잠금 (Win+L)">
-        <DockPanel>
-          <c:Icon DockPanel.Dock="Top" Kind="Lock" Width="17" Height="17" HorizontalAlignment="Left"/>
+          <c:Icon DockPanel.Dock="Top" Kind="Leaf" Width="17" Height="17" HorizontalAlignment="Left"/>
           <StackPanel VerticalAlignment="Bottom">
-            <TextBlock Text="잠금" Style="{StaticResource TileLabel}"/>
-            <TextBlock Text="바로 잠금" Style="{StaticResource TileState}"/>
+            <TextBlock Text="절전 모드" Style="{StaticResource TileLabel}"/>
+            <TextBlock Text="{Binding PowerSaverText}" Style="{StaticResource TileState}"/>
           </StackPanel>
         </DockPanel>
+      </Button>
+    </UniformGrid>
+
+    <!-- [해] 밝기 [%] [잠금] — 밝기를 바꿀 수 없는 화면이면 안내 문구 -->
+    <Grid Margin="0,10,0,0" Height="30">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="30"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="40"/>
+        <ColumnDefinition Width="30"/>
+      </Grid.ColumnDefinitions>
+      <c:Icon Kind="Sun" Width="17" Height="17" Foreground="{DynamicResource Brush.Text}" ToolTip="화면 밝기"/>
+      <Slider Grid.Column="1" Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="100" VerticalAlignment="Center" Margin="6,0"
+              Value="{Binding Brightness}" AutomationProperties.Name="화면 밝기"
+              Visibility="{Binding BrightnessSupported, Converter={StaticResource BoolToVis}}"/>
+      <TextBlock Grid.Column="1" Grid.ColumnSpan="2" Text="이 화면은 밝기 조절을 지원하지 않습니다" Style="{StaticResource Text.Caption}" Margin="6,0"
+                 VerticalAlignment="Center" Visibility="{Binding BrightnessSupported, Converter={StaticResource InvBoolToVis}}"/>
+      <TextBlock Grid.Column="2" Text="{Binding BrightnessText}" Style="{StaticResource Text.Sub}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"
+                 Visibility="{Binding BrightnessSupported, Converter={StaticResource BoolToVis}}"/>
+      <Button Grid.Column="3" Style="{StaticResource Button.Icon}" Command="{Binding LockCommand}"
+              AutomationProperties.Name="화면 잠금" ToolTip="지금 화면 잠금 (Win+L)">
+        <c:Icon Kind="Lock" Width="15" Height="15" Foreground="{DynamicResource Brush.Text}"/>
+      </Button>
+    </Grid>
+
+    <!-- [음소거] 볼륨 [%] [믹서] — 믹서의 전체 볼륨을 그대로 쓴다 -->
+    <Grid Margin="0,4,0,0" Height="30" DataContext="{Binding Mixer}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="30"/>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="40"/>
+        <ColumnDefinition Width="30"/>
+      </Grid.ColumnDefinitions>
+      <Button Style="{StaticResource Button.Icon}" Command="{Binding ToggleMasterMuteCommand}" IsEnabled="{Binding IsAvailable}"
+              AutomationProperties.Name="전체 음소거" ToolTip="전체 음소거">
+        <c:Icon Kind="{Binding MasterIcon}" Width="17" Height="17" Foreground="{DynamicResource Brush.Text}"/>
+      </Button>
+      <Slider Grid.Column="1" Style="{StaticResource Slider.NowBar}" Minimum="0" Maximum="100" VerticalAlignment="Center" Margin="6,0"
+              Value="{Binding MasterVolume}" IsEnabled="{Binding IsAvailable}" AutomationProperties.Name="전체 볼륨" ToolTip="{Binding DeviceName}"/>
+      <TextBlock Grid.Column="2" Text="{Binding MasterVolumeText, StringFormat={}{0}%}" Style="{StaticResource Text.Sub}" FontSize="11"
+                 HorizontalAlignment="Right" VerticalAlignment="Center"/>
+      <Button Grid.Column="3" Style="{StaticResource Button.Icon}"
+              Command="{Binding DataContext.OpenMixerCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+              AutomationProperties.Name="볼륨 믹서" ToolTip="앱별 볼륨 (볼륨 믹서)">
+        <c:Icon Kind="Mixer" Width="15" Height="15" Foreground="{DynamicResource Brush.Text}"/>
       </Button>
     </Grid>
 
