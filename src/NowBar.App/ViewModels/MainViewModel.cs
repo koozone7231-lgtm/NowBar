@@ -100,7 +100,7 @@ public partial class MainViewModel : ObservableObject
     public bool IsFaceMode => Settings.CompactDisplay == CompactDisplay.Face;
 
     /// <summary>
-    /// 우선순위: 응답 필요 → 작업 중 → (방금) 오류 → 배터리 부족 → 오프라인 → 과부하 → 음악 감상 → (방금) 완료 → 평소.
+    /// 우선순위: 응답 필요 → (방금) 충전 시작 → 작업 중 → (방금) 오류 → 배터리 부족 → 오프라인 → 과부하 → 음악 감상 → (방금) 완료 → 평소.
     /// 사용자가 행동해야 하는 상태가 가장 먼저 보이도록 한다.
     /// </summary>
     public Controls.FaceMood FaceMood
@@ -109,6 +109,7 @@ public partial class MainViewModel : ObservableObject
         {
             var ai = AI.AggregateState;
             if (ai == ClaudeTaskState.Waiting) return Controls.FaceMood.Waiting;
+            if (Settings.ShowSystemStatus && Status.JustPluggedIn) return Controls.FaceMood.Charging;
             if (AI.IsWorking) return Controls.FaceMood.Working;
             if (ai == ClaudeTaskState.Error && AI.RecentlyFinished) return Controls.FaceMood.Error;
             if (Settings.ShowSystemStatus && Status.IsBatteryCritical) return Controls.FaceMood.LowBattery;
@@ -124,6 +125,7 @@ public partial class MainViewModel : ObservableObject
     {
         Controls.FaceMood.Waiting => "Claude가 응답을 기다리고 있어요",
         Controls.FaceMood.Working => "Claude가 작업 중이에요",
+        Controls.FaceMood.Charging => $"충전을 시작했어요 ({Status.BatteryPercent}%)",
         Controls.FaceMood.LowBattery => $"배터리가 부족해요 ({Status.BatteryPercent}%)",
         Controls.FaceMood.Offline => "인터넷에 연결되어 있지 않아요",
         Controls.FaceMood.Strained => Tools.System.StrainText,
@@ -171,6 +173,14 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void TogglePin() => IsPinned = !IsPinned;
+
+    /// <summary>숨김 모드 켜기: 패널을 접고 화면 위로 숨긴다 (창이 설정 변경을 보고 처리).</summary>
+    [RelayCommand]
+    private void EnterHiddenMode()
+    {
+        CollapseAndUnpin();
+        Settings.HiddenMode = true;
+    }
 
     /// <summary>설정 아이콘: 열려 있으면 닫고, 닫혀 있으면 패널을 키워 설정을 연다.</summary>
     [RelayCommand]

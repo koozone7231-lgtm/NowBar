@@ -10,6 +10,18 @@ public sealed class FaceRenderTests
 {
     public static IEnumerable<object[]> Moods() => Enum.GetValues<FaceMood>().Select(m => new object[] { m });
 
+    private static ResourceDictionary? FindIcons()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        {
+            var path = Path.Combine(dir.FullName, "src", "NowBar.App", "Resources", "Icons", "Icons.xaml");
+            if (!File.Exists(path)) continue;
+            using var stream = File.OpenRead(path);
+            return (ResourceDictionary)System.Windows.Markup.XamlReader.Load(stream);
+        }
+        return null;
+    }
+
     [Theory]
     [MemberData(nameof(Moods))]
     public void Every_mood_renders_visible_eyes(FaceMood mood)
@@ -21,6 +33,8 @@ public sealed class FaceRenderTests
             try
             {
                 var face = new FaceView { Mood = mood };
+                // 음표·번개 아이콘은 앱의 아이콘 사전에서 찾으므로, 소스의 아이콘 사전을 읽어 붙인다
+                if (FindIcons() is { } icons) face.Resources.MergedDictionaries.Add(icons);
                 var host = new System.Windows.Controls.Border { Background = Brushes.Black, Child = face, Width = 72, Height = 32 };
                 host.Measure(new Size(72, 32));
                 host.Arrange(new Rect(0, 0, 72, 32));

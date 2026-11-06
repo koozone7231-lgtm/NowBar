@@ -20,6 +20,10 @@
 
   <!-- 창은 투명(클릭 통과)하고, 실제 UI는 Island 테두리 안에만 있다 -->
   <Grid>
+    <Grid.Resources>
+      <!-- 숨김 모드: 캡슐·그림자·글로우를 함께 화면 위로 밀어 올리는 이동 -->
+      <TranslateTransform x:Key="TuckShift"/>
+    </Grid.Resources>
     <!-- 캡슐 그림자: 별도 레이어로 분리해 캐시 (텍스트·글로우가 바뀔 때마다 그림자를 다시 계산하지 않도록) -->
     <Border x:Name="IslandShadow"
             HorizontalAlignment="Center"
@@ -28,6 +32,7 @@
             Height="{Binding ActualHeight, ElementName=Island}"
             CornerRadius="{Binding CornerRadius, ElementName=Island}"
             Background="{DynamicResource Brush.Island}"
+            RenderTransform="{StaticResource TuckShift}"
             IsHitTestVisible="False">
       <Border.CacheMode>
         <BitmapCache EnableClearType="False"/>
@@ -44,12 +49,14 @@
             Background="Transparent"
             BorderBrush="{DynamicResource Brush.Border}"
             BorderThickness="1"
+            RenderTransform="{StaticResource TuckShift}"
             MouseEnter="Island_MouseEnter"
             MouseLeave="Island_MouseLeave">
       <Border.ContextMenu>
         <ContextMenu>
           <MenuItem Header="패널 고정" IsCheckable="True" IsChecked="{Binding IsPinned, Mode=TwoWay}"/>
           <MenuItem Header="설정..." Command="{Binding OpenSettingsCommand}"/>
+          <MenuItem Header="숨김 모드 (손잡이로 내리기)" IsCheckable="True" IsChecked="{Binding Settings.HiddenMode, Mode=TwoWay}"/>
           <MenuItem Header="NowBar 숨기기" Click="HideMenu_Click"/>
           <Separator/>
           <MenuItem Header="종료" Click="ExitMenu_Click"/>
@@ -207,6 +214,10 @@
                   </TextBlock>
                 </StackPanel>
               </StackPanel>
+              <Button Style="{StaticResource Button.Icon}" Command="{Binding EnterHiddenModeCommand}" ToolTip="숨김 모드: 화면 위로 숨기기 (맨 위 손잡이를 누르면 내려옴)"
+                      AutomationProperties.Name="숨김 모드" Margin="0,0,2,0">
+                <c:Icon Kind="ChevronUp" Width="16" Height="16" Foreground="{DynamicResource Brush.SubText}"/>
+              </Button>
               <Button Style="{StaticResource Button.Icon}" Command="{Binding TogglePinCommand}" ToolTip="패널 고정 (ESC: 고정 해제)" AutomationProperties.Name="패널 고정">
                 <c:Icon Kind="Pin" Width="16" Height="16">
                   <c:Icon.Style>
@@ -245,6 +256,7 @@
             CornerRadius="{Binding CornerRadius, ElementName=Island}"
             BorderBrush="{DynamicResource Brush.Accent}"
             BorderThickness="2"
+            RenderTransform="{StaticResource TuckShift}"
             IsHitTestVisible="False"
             Opacity="0"
             Visibility="Collapsed">
@@ -262,6 +274,32 @@
         <Border.Effect>
           <BlurEffect Radius="6"/>
         </Border.Effect>
+      </Border>
+    </Border>
+
+    <!-- 숨김 모드 손잡이: 화면 맨 위 가운데의 얇은 막대. 누르면 NowBar가 내려온다 -->
+    <Border x:Name="TuckHandle" HorizontalAlignment="Center" VerticalAlignment="Top" Width="72" Height="14"
+            Background="Transparent" Cursor="Hand" Visibility="Collapsed" Opacity="0"
+            ToolTip="NowBar 내리기" AutomationProperties.Name="NowBar 내리기"
+            MouseLeftButtonDown="TuckHandle_Click">
+      <Border x:Name="TuckHandleBar" Width="40" Height="5" CornerRadius="2.5" VerticalAlignment="Top" Margin="0,3,0,0">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Brush.Outline}"/>
+            <Setter Property="Opacity" Value="0.55"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsMouseOver, ElementName=TuckHandle}" Value="True">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="Background" Value="{DynamicResource Brush.Text}"/>
+              </DataTrigger>
+              <!-- 숨어 있어도 Claude가 응답을 기다리면 손잡이 색으로 알린다 -->
+              <DataTrigger Binding="{Binding FaceMood}" Value="Waiting">
+                <Setter Property="Opacity" Value="1"/>
+                <Setter Property="Background" Value="{DynamicResource Brush.Warning}"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
       </Border>
     </Border>
   </Grid>

@@ -16,7 +16,7 @@ public enum FaceMood
     Waiting,
     /// <summary>음악 감상: 웃는 눈(◠ ◠)이 박자에 맞춰 까딱이고 음표가 떠오름</summary>
     Music,
-    /// <summary>방금 작업 완료: 웃는 눈</summary>
+    /// <summary>방금 작업 완료: 웃는 눈이 살짝 왼쪽으로 비키고, 오른쪽에 초록 ✓가 슥 그어짐</summary>
     Happy,
     /// <summary>오류: ✕ ✕ 눈</summary>
     Error,
@@ -26,6 +26,8 @@ public enum FaceMood
     Offline,
     /// <summary>과부하(CPU·메모리): 질끈 감은 &gt; &lt; 눈이 떨리고 식은땀이 흐름</summary>
     Strained,
+    /// <summary>충전기 연결: 안도한 웃는 눈(◠ ◠) 옆에 번개가 톡 튀어나와 두근두근 (몇 초 동안)</summary>
+    Charging,
 }
 
 /// <summary>
@@ -49,6 +51,7 @@ public sealed class FaceView : FrameworkElement
     private static readonly DependencyProperty GazeYProperty = Register(nameof(GazeY), 0.0);
     private static readonly DependencyProperty BobProperty = Register(nameof(Bob), 0.0);
     private static readonly DependencyProperty NoteProgressProperty = Register(nameof(NoteProgress), 0.0);
+    private static readonly DependencyProperty PopProperty = Register(nameof(Pop), 1.0);
 
     private static DependencyProperty Register(string name, double value) =>
         DependencyProperty.Register(name, typeof(double), typeof(FaceView),
@@ -65,6 +68,7 @@ public sealed class FaceView : FrameworkElement
     private double GazeY => (double)GetValue(GazeYProperty);
     private double Bob => (double)GetValue(BobProperty);
     private double NoteProgress => (double)GetValue(NoteProgressProperty);
+    private double Pop => (double)GetValue(PopProperty);
 
     private readonly DispatcherTimer _blinkTimer;
 
@@ -112,7 +116,19 @@ public sealed class FaceView : FrameworkElement
                 break;
 
             case FaceMood.Happy:
-                if (entering) Once(BobProperty, -3, 0, 260); // 기뻐서 한 번 통통
+                if (entering)
+                {
+                    Once(BobProperty, -3, 0, 260); // 기뻐서 한 번 통통
+                    // 체크 표시를 왼쪽 아래에서 오른쪽 위로 그어 나간다 (살짝 늦게 시작)
+                    var draw = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(420))
+                    {
+                        BeginTime = TimeSpan.FromMilliseconds(160),
+                        EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    };
+                    Timeline.SetDesiredFrameRate(draw, 30);
+                    SetValue(PopProperty, 0.0);
+                    BeginAnimation(PopProperty, draw);
+                }
                 break;
 
             case FaceMood.Error:
@@ -125,6 +141,20 @@ public sealed class FaceView : FrameworkElement
             case FaceMood.Offline:
                 // 어디 갔지? 하듯 천천히 좌우를 살핌
                 Loop(GazeXProperty, -4, 4, 1800);
+                break;
+
+            case FaceMood.Charging:
+                // 충전기를 꽂으면: 깜짝 놀란 듯 통 튀고, 번개가 튀어나와(살짝 넘쳤다 돌아옴) 두근두근 맥박
+                if (entering) Once(BobProperty, -5, 0, 380);
+                var pop = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(520))
+                {
+                    EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.9 },
+                };
+                Timeline.SetDesiredFrameRate(pop, 30);
+                BeginAnimation(PopProperty, pop);
+                var pulse = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(900)) { RepeatBehavior = RepeatBehavior.Forever };
+                Timeline.SetDesiredFrameRate(pulse, LoopFps);
+                BeginAnimation(NoteProgressProperty, pulse);
                 break;
 
             case FaceMood.Strained:
@@ -140,7 +170,7 @@ public sealed class FaceView : FrameworkElement
     private void StopAll()
     {
         _blinkTimer.Stop();
-        foreach (var dp in new[] { OpennessProperty, GazeXProperty, GazeYProperty, BobProperty, NoteProgressProperty })
+        foreach (var dp in new[] { OpennessProperty, GazeXProperty, GazeYProperty, BobProperty, NoteProgressProperty, PopProperty })
         {
             BeginAnimation(dp, null);
             ClearValue(dp);
@@ -226,7 +256,9 @@ public sealed class FaceView : FrameworkElement
                 break;
 
             case FaceMood.Happy:
-                DrawHappyEyes(dc, eyeBrush, leftX, rightX, cy);
+                // 눈을 왼쪽으로 조금 옮겨 체크 표시 자리를 만든다
+                DrawHappyEyes(dc, eyeBrush, leftX - 6, rightX - 6, cy);
+                DrawCheck(dc, rightX + 7, cy, Pop);
                 break;
 
             case FaceMood.Error:
@@ -257,6 +289,11 @@ public sealed class FaceView : FrameworkElement
                 var dim = ResBrush("Brush.SubText", Brushes.Gray);
                 dc.DrawEllipse(dim, null, new Point(leftX, cy), 3.5 * Openness, 3.5 * Openness);
                 dc.DrawEllipse(dim, null, new Point(rightX, cy), 3.5 * Openness, 3.5 * Openness);
+                break;
+
+            case FaceMood.Charging:
+                DrawHappyEyes(dc, eyeBrush, leftX, rightX, cy);
+                DrawBolt(dc, rightX + 12.5, cy - 1);
                 break;
 
             case FaceMood.Strained:
@@ -354,6 +391,58 @@ public sealed class FaceView : FrameworkElement
         g.Freeze();
         dc.PushOpacity(opacity);
         dc.DrawGeometry(ResBrush("Brush.Info", Brushes.SkyBlue), null, g);
+        dc.Pop();
+    }
+
+    /// <summary>초록 체크 ✓ — progress 0~1만큼 왼쪽 아래 → 꺾임 → 오른쪽 위로 그려진다.</summary>
+    private void DrawCheck(DrawingContext dc, double x, double cy, double progress)
+    {
+        progress = Math.Clamp(progress, 0, 1);
+        if (progress <= 0.01) return;
+        var a = new Point(x, cy);
+        var b = new Point(x + 4, cy + 4);
+        var c = new Point(x + 11, cy - 5);
+        var first = (b - a).Length;
+        var total = first + (c - b).Length;
+        var drawn = total * progress;
+
+        var g = new StreamGeometry();
+        using (var ctx = g.Open())
+        {
+            ctx.BeginFigure(a, false, false);
+            if (drawn <= first)
+            {
+                ctx.LineTo(a + (b - a) * (drawn / first), true, true);
+            }
+            else
+            {
+                ctx.LineTo(b, true, true);
+                ctx.LineTo(b + (c - b) * ((drawn - first) / (total - first)), true, true);
+            }
+        }
+        g.Freeze();
+        dc.DrawGeometry(null, RoundPen(ResBrush("Brush.Accent", Brushes.LimeGreen), 3.2), g);
+    }
+
+    /// <summary>오른쪽 눈 옆의 번개 (강조색): 튀어나온 뒤 맥박처럼 커졌다 작아지며 은은하게 빛난다.</summary>
+    private void DrawBolt(DrawingContext dc, double x, double cy)
+    {
+        if (TryFindResource("Icon.Bolt") is not Geometry bolt) return;
+        var beat = Math.Sin(NoteProgress * Math.PI * 2); // -1 ~ 1
+        var pop = Math.Max(0, Pop);
+        if (pop <= 0.01) return;
+        var size = 13 * pop * (1 + 0.1 * beat);
+        var scale = size / 24.0;
+        var accent = ResBrush("Brush.Accent", Brushes.LimeGreen);
+
+        dc.PushTransform(new TranslateTransform(x - size / 2, cy - size / 2));
+        dc.PushTransform(new ScaleTransform(scale, scale));
+        // 뒤에 번지는 빛 (두꺼운 반투명 테두리)
+        dc.PushOpacity(0.18 + 0.14 * (beat + 1) / 2);
+        dc.DrawGeometry(null, RoundPen(accent, 7), bolt);
+        dc.Pop();
+        dc.DrawGeometry(accent, RoundPen(accent, 1.5), bolt);
+        dc.Pop();
         dc.Pop();
     }
 

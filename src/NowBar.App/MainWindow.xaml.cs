@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Microsoft.Win32;
@@ -26,6 +27,11 @@ public partial class MainWindow : Window
     private bool _hiddenForFullscreen;
     private bool _userHidden;
 
+    // 숨김 모드: 화면 위로 올라가 있는지, 내려온 뒤 다시 올라갈 때까지 마우스가 떠나 있던 횟수
+    private readonly DispatcherTimer _retuckTimer;
+    private bool _tucked;
+    private int _awayTicks;
+
     public MainWindow(MainViewModel vm)
     {
         InitializeComponent();
@@ -43,6 +49,10 @@ public partial class MainWindow : Window
         // 항상 위 재지정 + 전체 화면 앱 감지
         _housekeeping = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
         _housekeeping.Tick += (_, _) => Housekeeping();
+
+        // 숨김 모드에서 내려온 뒤, 패널이 접히고 마우스가 떠나 있으면 잠시 후 다시 올라간다
+        _retuckTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(500) };
+        _retuckTimer.Tick += RetuckTimer_Tick;
 
         // 설정 패널에서 사용하는 확인 창 (이 창을 소유자로 해 항상 NowBar 위에 표시)
         _vm.ConfirmUnsavedSettings = AskUnsavedSettings;
@@ -81,6 +91,7 @@ public partial class MainWindow : Window
 
         Topmost = _settings.AlwaysOnTop;
         ApplyLayout(animate: false);
+        ApplyHiddenMode(animate: false);
         _housekeeping.Start();
     }
 
@@ -101,6 +112,89 @@ public partial class MainWindow : Window
         UpdateDetailSize();
 
         AnimateIsland(_vm.IsExpanded, animate ? _settings.AnimationMs : 1);
+        if (_tucked) AnimationHelper.Animate(TuckShift, TranslateTransform.YProperty, -TuckDistance, 1);
+    }
+
+    // ── 숨김 모드 ────────────────────────────────────────
+    private TranslateTransform TuckShift => (TranslateTransform)((FrameworkElement)Content).Resources["TuckShift"];
+
+    /// <summary>캡슐과 그림자가 화면 위로 완전히 사라지는 거리.</summary>
+    private double TuckDistance => _settings.TopOffset + _settings.CapsuleHeight + 40;
+
+    private void ApplyHiddenMode(bool animate)
+    {
+        if (!_settings.HiddenMode)
+        {
+            _retuckTimer.Stop();
+            Untuck(animate);
+            return;
+        }
+        if (!_vm.IsExpanded && !_vm.IsPinned && !_vm.IsSettingsOpen) Tuck(animate);
+        else StartRetuckWatch();
+    }
+
+    private void Tuck(bool animate)
+    {
+        if (_tucked) return;
+        _tucked = true;
+        _retuckTimer.Stop();
+        Island.IsHitTestVisible = false; // 맨 위로 마우스가 지나가도 펼쳐지지 않게
+        var ms = animate ? Math.Max(_settings.AnimationMs, 220) : 1;
+        AnimationHelper.Animate(TuckShift, TranslateTransform.YProperty, -TuckDistance, ms, completed: () =>
+        {
+            // 올라간 뒤에는 렌더링에서 빼서 얼굴 애니메이션도 멈춘다
+            if (!_tucked) return;
+            Island.Visibility = Visibility.Hidden;
+            IslandShadow.Visibility = Visibility.Hidden;
+        });
+        TuckHandle.Visibility = Visibility.Visible;
+        AnimationHelper.Animate(TuckHandle, OpacityProperty, 1, ms);
+    }
+
+    private void Untuck(bool animate)
+    {
+        if (!_tucked) return;
+        _tucked = false;
+        Island.Visibility = Visibility.Visible;
+        IslandShadow.Visibility = Visibility.Visible;
+        Island.IsHitTestVisible = true;
+        var ms = animate ? Math.Max(_settings.AnimationMs, 220) : 1;
+        AnimationHelper.Animate(TuckShift, TranslateTransform.YProperty, 0, ms);
+        AnimationHelper.Animate(TuckHandle, OpacityProperty, 0, ms, completed: () =>
+        {
+            if (!_tucked) TuckHandle.Visibility = Visibility.Collapsed;
+        });
+        if (_settings.HiddenMode) StartRetuckWatch();
+    }
+
+    private void StartRetuckWatch()
+    {
+        _awayTicks = 0;
+        _retuckTimer.Start();
+    }
+
+    private void RetuckTimer_Tick(object? sender, EventArgs e)
+    {
+        if (!_settings.HiddenMode || _tucked)
+        {
+            _retuckTimer.Stop();
+            return;
+        }
+        if (_vm.IsExpanded || _vm.IsPinned || _vm.IsSettingsOpen || Mouse.Captured is not null
+            || Island.ContextMenu?.IsOpen == true || IsCursorOverIsland())
+        {
+            _awayTicks = 0;
+            return;
+        }
+        // 약 2초 동안 마우스가 떠나 있으면 다시 올라간다
+        if (++_awayTicks >= 4) Tuck(animate: true);
+    }
+
+    private void TuckHandle_Click(object sender, MouseButtonEventArgs e)
+    {
+        Logger.Info("숨김 모드 손잡이로 내림");
+        Untuck(animate: true);
+        e.Handled = true;
     }
 
     /// <summary>축소 크기: 얼굴 모드는 얼굴에 맞춘 작은 캡슐, 항목 모드는 설정한 너비.</summary>
@@ -353,6 +447,8 @@ public partial class MainWindow : Window
         switch (e.PropertyName)
         {
             case nameof(MainViewModel.IsExpanded):
+                // 트레이·두 번째 실행 등으로 펼치면 숨김 모드에서도 내려온다
+                if (_vm.IsExpanded && _tucked) Untuck(animate: true);
                 AnimateIsland(_vm.IsExpanded, _settings.AnimationMs);
                 if (_vm.IsExpanded)
                 {
@@ -366,6 +462,7 @@ public partial class MainWindow : Window
                 }
                 break;
             case nameof(MainViewModel.IsPinned):
+                if (_vm.IsPinned && _tucked) Untuck(animate: true);
                 if (_vm.IsPinned) _collapseTimer.Stop();
                 else if (!IsCursorOverIsland()) ScheduleCollapse();
                 break;
@@ -409,6 +506,10 @@ public partial class MainWindow : Window
             case nameof(AppSettings.HideInFullscreen):
                 Housekeeping();
                 break;
+            case nameof(AppSettings.HiddenMode):
+                Logger.Info(_settings.HiddenMode ? "숨김 모드 켬" : "숨김 모드 끔");
+                ApplyHiddenMode(animate: true);
+                break;
             case nameof(AppSettings.ShowWorkingGlow):
                 UpdateGlow();
                 break;
@@ -446,7 +547,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            var center = Island.PointToScreen(new Point(Island.ActualWidth / 2, Island.ActualHeight / 2));
+            // 숨김 모드로 올라가 있으면 손잡이가 가려졌는지 본다
+            FrameworkElement target = _tucked ? TuckHandle : Island;
+            var center = target.PointToScreen(new Point(target.ActualWidth / 2, target.ActualHeight / 2));
             var hit = NativeMethods.WindowFromPoint(new NativeMethods.POINT { X = (int)center.X, Y = (int)center.Y });
             return hit != IntPtr.Zero && NativeMethods.GetAncestor(hit, NativeMethods.GA_ROOT) != _hwnd;
         }
@@ -490,6 +593,7 @@ public partial class MainWindow : Window
         _collapseTimer.Stop();
         _hoverWatchdog.Stop();
         _housekeeping.Stop();
+        _retuckTimer.Stop();
         _vm.PropertyChanged -= OnViewModelChanged;
         _vm.AI.PropertyChanged -= OnAIChanged;
         _settings.PropertyChanged -= OnSettingsChanged;

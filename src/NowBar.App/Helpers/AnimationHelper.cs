@@ -15,7 +15,7 @@ public static class AnimationHelper
     }
 
     /// <summary>현재 값에서 목표 값까지 EaseOut으로 애니메이션한다. 진행 중인 애니메이션은 현재 위치에서 이어받는다.</summary>
-    public static void Animate(UIElement target, DependencyProperty property, double to, int durationMs, Action? completed = null)
+    public static void Animate(IAnimatable target, DependencyProperty property, double to, int durationMs, Action? completed = null)
     {
         var animation = new DoubleAnimation(to, TimeSpan.FromMilliseconds(Math.Max(1, durationMs)))
         {

@@ -34,6 +34,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private int _collapseDelayMs = 500;
     [ObservableProperty] private bool _alwaysOnTop = true;
     [ObservableProperty] private bool _hideInFullscreen = true;
+    /// <summary>숨김 모드: 캡슐을 화면 위로 완전히 올려 숨기고, 맨 위 가운데의 작은 손잡이를 눌러야 내려온다.</summary>
+    [ObservableProperty] private bool _hiddenMode;
     /// <summary>펼친 패널에 배터리·네트워크 아이콘 표시, 얼굴이 배터리 부족·오프라인에 반응.</summary>
     [ObservableProperty] private bool _showSystemStatus = true;
     /// <summary>메모리가 거의 찼을 때 얼굴이 버거워하는 표정을 지을지 (8GB PC는 평소에도 높아서 기본 꺼짐).</summary>

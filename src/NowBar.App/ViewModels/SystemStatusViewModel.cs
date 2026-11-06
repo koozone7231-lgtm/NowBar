@@ -13,6 +13,10 @@ public partial class SystemStatusViewModel : ObservableObject, IDisposable
     private readonly SystemStatusService _service;
     private readonly AppSettings _settings;
     private readonly DispatcherTimer _refreshTimer;
+    private readonly DispatcherTimer _pluggedTimer;
+
+    /// <summary>충전기를 방금 연결함 (몇 초 동안만 true) → 얼굴이 충전 시작 표정을 짓는다.</summary>
+    [ObservableProperty] private bool _justPluggedIn;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasBattery), nameof(BatteryPercent), nameof(IsCharging), nameof(IsBatteryLow),
@@ -25,6 +29,8 @@ public partial class SystemStatusViewModel : ObservableObject, IDisposable
         _service = service;
         _settings = settings;
         _service.Changed += (_, s) => Ui(() => Status = s);
+        _pluggedTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4.5) };
+        _pluggedTimer.Tick += (_, _) => { _pluggedTimer.Stop(); JustPluggedIn = false; };
         _settings.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(AppSettings.ShowSystemStatus)) OnPropertyChanged(nameof(IsVisible));
@@ -35,6 +41,26 @@ public partial class SystemStatusViewModel : ObservableObject, IDisposable
     }
 
     public bool IsVisible => _settings.ShowSystemStatus;
+
+    /// <summary>배터리가 있는 기기에서 전원이 빠져 있다가 연결된 순간인지.</summary>
+    public static bool IsPlugInMoment(SystemStatusSnapshot before, SystemStatusSnapshot after) =>
+        before != SystemStatusSnapshot.Unknown && after.HasBattery && !before.IsPluggedIn && after.IsPluggedIn;
+
+    partial void OnStatusChanged(SystemStatusSnapshot oldValue, SystemStatusSnapshot newValue)
+    {
+        if (IsPlugInMoment(oldValue, newValue))
+        {
+            Logger.Info($"충전기 연결 ({newValue.BatteryPercent}%)");
+            JustPluggedIn = true;
+            _pluggedTimer.Stop();
+            _pluggedTimer.Start();
+        }
+        else if (!newValue.IsPluggedIn && JustPluggedIn)
+        {
+            _pluggedTimer.Stop();
+            JustPluggedIn = false;
+        }
+    }
 
     public bool HasBattery => Status.HasBattery;
     public int BatteryPercent => Status.BatteryPercent;
@@ -94,5 +120,9 @@ public partial class SystemStatusViewModel : ObservableObject, IDisposable
         });
     }
 
-    public void Dispose() => _refreshTimer.Stop();
+    public void Dispose()
+    {
+        _refreshTimer.Stop();
+        _pluggedTimer.Stop();
+    }
 }

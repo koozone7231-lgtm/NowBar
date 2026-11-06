@@ -24,6 +24,7 @@ public sealed class SettingsService : IDisposable
         nameof(AppSettings.HookPort),
         nameof(AppSettings.HookToken),
         nameof(AppSettings.LastSelectedTab),
+        nameof(AppSettings.HiddenMode),
     };
 
     /// <summary>편집 세션 중 파일에 기록되는 "저장된" 상태. null이면 편집 세션이 아님.</summary>
