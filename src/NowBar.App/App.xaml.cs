@@ -136,6 +136,7 @@ public partial class App : Application
             update.Start();
             if (afterUpdate)
                 _tray.ShowNotice("NowBar 업데이트 완료", $"v{UpdateService.CurrentVersion.ToString(3)}으로 업데이트했습니다.");
+            ShowWhatsNew(settings, afterUpdate, force: e.Args.Any(a => a.Equals("--whats-new", StringComparison.OrdinalIgnoreCase)));
 
             await Task.WhenAll(
                 Safe(weather.InitializeAsync(), "날씨 초기화"),
@@ -173,6 +174,36 @@ public partial class App : Application
                     main.IsPinned = true;
                     break;
             }
+        }
+    }
+
+    /// <summary>업데이트 뒤 처음 실행이면 "새로 바뀐 점" 팝업을 캡슐 아래에 띄운다 (한 번만).</summary>
+    private void ShowWhatsNew(AppSettings settings, bool afterUpdate, bool force)
+    {
+        try
+        {
+            var current = UpdateService.CurrentVersion;
+            var changelog = ReleaseNotes.LoadEmbedded();
+            var sections = force
+                ? ReleaseNotes.Between(ReleaseNotes.Parse(changelog), null, current)
+                : ReleaseNotes.ToShow(changelog, settings.LastSeenVersion, current, afterUpdate);
+            settings.LastSeenVersion = current.ToString(3);
+            if (sections.Count == 0 || _window is null) return;
+
+            Logger.Info($"새로 바뀐 점 표시: {string.Join(", ", sections.Select(s => "v" + s.Version))}");
+            // 창이 자리 잡고 업데이트 알림이 지나간 뒤에 조용히 띄운다
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                if (_window is null) return;
+                Views.WhatsNewWindow.Show(_window, settings.TopOffset + settings.CapsuleHeight + 4, current, sections);
+            };
+            timer.Start();
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("새로 바뀐 점 표시 실패", ex);
         }
     }
 

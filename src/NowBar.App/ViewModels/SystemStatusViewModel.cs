@@ -46,9 +46,9 @@ public partial class SystemStatusViewModel : ObservableObject, IDisposable
     public static bool IsPlugInMoment(SystemStatusSnapshot before, SystemStatusSnapshot after) =>
         before != SystemStatusSnapshot.Unknown && after.HasBattery && !before.IsPluggedIn && after.IsPluggedIn;
 
-    partial void OnStatusChanged(SystemStatusSnapshot oldValue, SystemStatusSnapshot newValue)
+    partial void OnStatusChanged(SystemStatusSnapshot? oldValue, SystemStatusSnapshot newValue)
     {
-        if (IsPlugInMoment(oldValue, newValue))
+        if (oldValue is not null && IsPlugInMoment(oldValue, newValue))
         {
             Logger.Info($"충전기 연결 ({newValue.BatteryPercent}%)");
             JustPluggedIn = true;

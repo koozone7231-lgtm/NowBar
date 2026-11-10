@@ -46,6 +46,8 @@ public partial class AppSettings : ObservableObject
     [ObservableProperty] private bool _autoCheckUpdates = true;
     /// <summary>새 버전을 받아 NowBar를 쓰고 있지 않을 때 자동으로 설치·재시작.</summary>
     [ObservableProperty] private bool _autoInstallUpdates = true;
+    /// <summary>"새로 바뀐 점" 팝업을 마지막으로 확인한 버전 (업데이트 뒤 처음 실행할 때 한 번만 보여 주기 위해).</summary>
+    [ObservableProperty] private string _lastSeenVersion = "";
 
     // ── 디자인 ────────────────────────────────────────────
     [ObservableProperty] private AppTheme _theme = AppTheme.Dark;

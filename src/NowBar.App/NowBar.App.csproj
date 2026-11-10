@@ -12,7 +12,7 @@
     <AssemblyName>NowBar</AssemblyName>
     <RootNamespace>NowBar.App</RootNamespace>
     <Product>NowBar</Product>
-    <Version>1.5.0</Version>
+    <Version>1.5.1</Version>
     <ApplicationIcon>Resources\Icons\nowbar.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -37,6 +37,8 @@
 
   <ItemGroup>
     <Resource Include="Resources\Icons\nowbar.ico" />
+    <!-- 업데이트 직후 "새로 바뀐 점" 팝업에 쓰는 변경 기록 -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" />
   </ItemGroup>
 
 </Project>

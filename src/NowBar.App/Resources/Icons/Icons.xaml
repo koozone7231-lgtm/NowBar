@@ -19,6 +19,7 @@
   <Geometry x:Key="Icon.Umbrella">M22,12 A10,10 0 0 0 2,12 Z M12,12 V19 A2,2 0 0 0 16,19 M12,2 V3</Geometry>
   <Geometry x:Key="Icon.ArrowUp">M12,19 V5 M5,12 L12,5 L19,12</Geometry>
   <Geometry x:Key="Icon.ArrowLeft">M19,12 H5 M12,19 L5,12 L12,5</Geometry>
+  <Geometry x:Key="Icon.EyeOff">M9.88,9.88 A3,3 0 1 0 14.12,14.12 M10.73,5.08 A10.43,10.43 0 0 1 12,5 C19,5 22,12 22,12 A13.16,13.16 0 0 1 20.32,14.68 M6.61,6.61 A13.53,13.53 0 0 0 2,12 C2,12 5,19 12,19 A9.74,9.74 0 0 0 17.39,17.39 M2,2 L22,22</Geometry>
   <Geometry x:Key="Icon.ChevronUp">M18,15 L12,9 L6,15</Geometry>
   <Geometry x:Key="Icon.ArrowDown">M12,5 V19 M19,12 L12,19 L5,12</Geometry>
   <Geometry x:Key="Icon.Thermometer">M14,4 V14.54 A4,4 0 1 1 10,14.54 V4 A2,2 0 0 1 14,4 Z</Geometry>

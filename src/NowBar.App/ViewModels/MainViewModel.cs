@@ -174,12 +174,15 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void TogglePin() => IsPinned = !IsPinned;
 
-    /// <summary>숨김 모드 켜기: 패널을 접고 화면 위로 숨긴다 (창이 설정 변경을 보고 처리).</summary>
+    /// <summary>
+    /// 숨김 모드 켜기/끄기 (펼친 패널의 버튼). 켜면 고정을 풀고, 마우스가 떠나 패널이 접히면 화면 위로 올라간다.
+    /// </summary>
     [RelayCommand]
-    private void EnterHiddenMode()
+    private void ToggleHiddenMode()
     {
-        CollapseAndUnpin();
-        Settings.HiddenMode = true;
+        var on = !Settings.HiddenMode;
+        if (on) IsPinned = false;
+        Settings.HiddenMode = on;
     }
 
     /// <summary>설정 아이콘: 열려 있으면 닫고, 닫혀 있으면 패널을 키워 설정을 연다.</summary>

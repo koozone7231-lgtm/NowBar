@@ -214,9 +214,30 @@
                   </TextBlock>
                 </StackPanel>
               </StackPanel>
-              <Button Style="{StaticResource Button.Icon}" Command="{Binding EnterHiddenModeCommand}" ToolTip="숨김 모드: 화면 위로 숨기기 (맨 위 손잡이를 누르면 내려옴)"
-                      AutomationProperties.Name="숨김 모드" Margin="0,0,2,0">
-                <c:Icon Kind="ChevronUp" Width="16" Height="16" Foreground="{DynamicResource Brush.SubText}"/>
+              <!-- 숨김 모드 켜기/끄기: 켜져 있으면 강조색 -->
+              <Button Command="{Binding ToggleHiddenModeCommand}" AutomationProperties.Name="숨김 모드" Margin="0,0,2,0">
+                <Button.Style>
+                  <Style TargetType="Button" BasedOn="{StaticResource Button.Icon}">
+                    <Setter Property="ToolTip" Value="숨김 모드 켜기: 패널을 닫으면 화면 위로 숨고, 맨 위 가운데 손잡이를 누르면 내려와요"/>
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Settings.HiddenMode}" Value="True">
+                        <Setter Property="ToolTip" Value="숨김 모드 켜짐 (누르면 끄기)"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Button.Style>
+                <c:Icon Kind="EyeOff" Width="16" Height="16">
+                  <c:Icon.Style>
+                    <Style TargetType="c:Icon">
+                      <Setter Property="Foreground" Value="{DynamicResource Brush.SubText}"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Settings.HiddenMode}" Value="True">
+                          <Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </c:Icon.Style>
+                </c:Icon>
               </Button>
               <Button Style="{StaticResource Button.Icon}" Command="{Binding TogglePinCommand}" ToolTip="패널 고정 (ESC: 고정 해제)" AutomationProperties.Name="패널 고정">
                 <c:Icon Kind="Pin" Width="16" Height="16">
