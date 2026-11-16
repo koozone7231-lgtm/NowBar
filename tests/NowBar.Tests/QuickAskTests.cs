@@ -80,3 +80,21 @@ public sealed class QuickAskTests
         Assert.Equal("서울의 날씨\n• 맑음\ncode\n끝", flattened);
     }
 }
+
+public sealed class ClaudeChildEnvironmentTests
+{
+    [Fact]
+    public void Session_markers_are_removed_but_user_settings_stay()
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo("claude.exe");
+        psi.Environment["CLAUDECODE"] = "1";
+        psi.Environment["CLAUDE_CODE_CHILD_SESSION"] = "1";
+        psi.Environment["CLAUDE_CODE_ENTRYPOINT"] = "cli";
+        psi.Environment["CLAUDE_CODE_USE_BEDROCK"] = "1"; // 사용자가 정한 설정
+        NowBar.App.Services.ClaudeAskService.RemoveSessionMarkers(psi);
+        Assert.False(psi.Environment.ContainsKey("CLAUDECODE"));
+        Assert.False(psi.Environment.ContainsKey("CLAUDE_CODE_CHILD_SESSION"));
+        Assert.False(psi.Environment.ContainsKey("CLAUDE_CODE_ENTRYPOINT"));
+        Assert.Equal("1", psi.Environment["CLAUDE_CODE_USE_BEDROCK"]);
+    }
+}

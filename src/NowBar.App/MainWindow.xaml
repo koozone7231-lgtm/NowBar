@@ -314,13 +314,55 @@
                 <TextBlock Text="{Binding Error}" Style="{StaticResource Text.Sub}" Foreground="{DynamicResource Brush.Warning}"
                            TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
                            Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
+
+                <!-- 링크 열기·앱 실행: 실행한 결과 (누르면 다시 실행) -->
+                <ItemsControl ItemsSource="{Binding Actions}" Margin="0,8,0,0"
+                              Visibility="{Binding HasActions, Converter={StaticResource BoolToVis}}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Button Style="{StaticResource Button.Pill}" Padding="10,5" Margin="0,0,6,4" FontWeight="Normal"
+                              Command="{Binding DataContext.RunActionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                              CommandParameter="{Binding}" ToolTip="{Binding Action.Target}" AutomationProperties.Name="{Binding Title}">
+                        <StackPanel Orientation="Horizontal">
+                          <c:Icon Kind="{Binding Icon}" Width="13" Height="13" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding Title}" Margin="6,0,0,0" FontSize="12.5" VerticalAlignment="Center"/>
+                          <TextBlock Text="{Binding Status}" Margin="6,0,0,0" FontSize="12" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                              <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                                <Style.Triggers>
+                                  <DataTrigger Binding="{Binding Failed}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
+                                  </DataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </TextBlock.Style>
+                          </TextBlock>
+                        </StackPanel>
+                      </Button>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
                 <DockPanel Margin="0,8,0,0">
                   <Button DockPanel.Dock="Right" Style="{StaticResource Button.Icon}" Width="26" Height="26" Command="{Binding CopyAnswerCommand}"
-                          ToolTip="답 복사" AutomationProperties.Name="답 복사"
+                          ToolTip="답 복사" AutomationProperties.Name="답 복사" Margin="4,0,0,0"
                           Visibility="{Binding HasAnswer, Converter={StaticResource BoolToVis}}">
                     <c:Icon Kind="Clipboard" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}"/>
                   </Button>
-                  <TextBlock Text="Claude Code · Enter 새 질문 · Esc 닫기" Style="{StaticResource Text.Caption}" VerticalAlignment="Center"/>
+                  <Button DockPanel.Dock="Right" Style="{StaticResource Button.Outline}" Padding="10,4" FontWeight="Normal" FontSize="12"
+                          Command="{Binding ContinueInClaudeCodeCommand}" AutomationProperties.Name="Claude Code에서 계속"
+                          ToolTip="질문과 답을 첫 메시지로 넣어 Claude Code 작업창(터미널)을 엽니다 (Ctrl+Enter)"
+                          Visibility="{Binding CanContinue, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Claude Code에서 계속" VerticalAlignment="Center"/>
+                      <c:Icon Kind="ExternalLink" Width="12" Height="12" Margin="6,0,0,0" Foreground="{DynamicResource Brush.SubText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                  </Button>
+                  <TextBlock Text="Enter 새 질문 · Ctrl+Enter 이어서 · Esc 닫기" Style="{StaticResource Text.Caption}" VerticalAlignment="Center"/>
                 </DockPanel>
               </StackPanel>
             </Border>

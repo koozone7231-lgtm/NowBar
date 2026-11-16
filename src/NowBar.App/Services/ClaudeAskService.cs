@@ -24,7 +24,24 @@ public sealed class ClaudeAskService
     private const string SystemPrompt =
         "You are answering a quick question typed into NowBar, a small desktop widget. " +
         "Reply in the user's language, short and direct: usually 1-5 sentences. " +
-        "Use a short bullet list only when it truly helps; avoid tables, headings and long code blocks.";
+        "Use a short bullet list only when it truly helps; avoid tables, headings and long code blocks. " +
+        "You cannot use tools, but NowBar can open things for the user: when the user explicitly asks to open a website or link, " +
+        "or to launch/run an app on their Windows PC, write a one-line confirmation in their language, then put each request on its own " +
+        "final line exactly as '@open <full https URL>' (also 'ms-settings:<page>' for Windows settings pages, or 'mailto:') " +
+        "or '@app <app name as shown in the Windows Start menu, or its exe name such as chrome or notepad>'. At most 3 such lines. " +
+        "Never use these lines unless the user asked to open or run something, and never for command-line tools or scripts.";
+
+    /// <summary>
+    /// Claude Code가 자기 하위 프로세스에 붙이는 "세션 안에서 실행됨" 표시. NowBar가 Claude Code 안에서
+    /// 시작된 경우(개발 중 등) 이것이 그대로 넘어가면 새 claude가 대화 저장을 끄는 등 하위 세션처럼 동작하므로 뗀다.
+    /// 사용자가 직접 정한 다른 CLAUDE_CODE_* 설정은 건드리지 않는다.
+    /// </summary>
+    public static readonly string[] SessionMarkers = ["CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_CHILD_SESSION"];
+
+    public static void RemoveSessionMarkers(ProcessStartInfo psi)
+    {
+        foreach (var name in SessionMarkers) psi.Environment.Remove(name);
+    }
 
     /// <summary>claude 실행 파일 (사용자 로컬 설치 → PATH 순). 없으면 null.</summary>
     public static string? FindClaude()
@@ -128,6 +145,7 @@ public sealed class ClaudeAskService
             psi.ArgumentList.Add(claude);
         }
         foreach (var arg in BuildArguments()) psi.ArgumentList.Add(arg);
+        RemoveSessionMarkers(psi);
 
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
         timeout.CancelAfter(Timeout);

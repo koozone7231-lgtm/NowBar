@@ -182,7 +182,21 @@ public partial class MainWindow : Window
     private void ActivateForTyping()
     {
         Activate();
-        if (_hwnd != IntPtr.Zero) NativeMethods.SetForegroundWindow(_hwnd);
+        if (_hwnd != IntPtr.Zero && !NativeMethods.SetForegroundWindow(_hwnd))
+        {
+            // Windows가 앞으로 나오기를 막으면, 지금 앞에 있는 창의 입력 큐에 잠깐 붙어서 다시 시도한다
+            var foreground = NativeMethods.GetForegroundWindow();
+            var theirs = NativeMethods.GetWindowThreadProcessId(foreground, IntPtr.Zero);
+            var mine = NativeMethods.GetCurrentThreadId();
+            if (theirs != 0 && theirs != mine && NativeMethods.AttachThreadInput(mine, theirs, true))
+            {
+                NativeMethods.BringWindowToTop(_hwnd);
+                NativeMethods.SetForegroundWindow(_hwnd);
+                NativeMethods.AttachThreadInput(mine, theirs, false);
+            }
+            if (NativeMethods.GetForegroundWindow() != _hwnd)
+                Logger.Info("빠른 질문 창을 앞으로 가져오지 못함 (입력창을 한 번 눌러 주세요)");
+        }
         FocusAskBox();
     }
 
@@ -239,6 +253,13 @@ public partial class MainWindow : Window
 
     private void AskBox_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.Control)
+        {
+            // 방금 받은 답을 Claude Code 작업창에서 이어 가기
+            if (_vm.Ask.CanContinue) _vm.Ask.ContinueInClaudeCodeCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
         {
             if (_vm.Ask.SubmitCommand.CanExecute(null)) _vm.Ask.SubmitCommand.Execute(null);

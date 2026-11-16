@@ -174,9 +174,22 @@ public partial class AIActivityViewModel : ObservableObject, IDisposable
     /// (토큰 재발급, 포트 변경, 다른 위치에서 실행한 NowBar 등) NowBar 항목만 현재 값으로 고친다. 원본은 백업된다.
     /// 한 번도 연동하지 않았다면 아무것도 하지 않는다 (처음 연동은 설정에서 변경 내용을 보고 승인).
     /// </summary>
+    /// <summary>
+    /// 자동 재연결이 사용자의 Claude Code 설정을 고쳐도 되는지.
+    /// 개발·테스트용으로 별도 데이터 폴더(NOWBAR_DATA_DIR)를 쓰는 NowBar는, Claude 설정 폴더(CLAUDE_CONFIG_DIR)도 따로 줬을 때만 고친다.
+    /// (그렇지 않으면 테스트용 NowBar가 실제 Hook을 자기 포트로 바꿔 버린다)
+    /// </summary>
+    public static bool MayTouchClaudeSettings(string? nowBarDataDir, string? claudeConfigDir) =>
+        string.IsNullOrWhiteSpace(nowBarDataDir) || !string.IsNullOrWhiteSpace(claudeConfigDir);
+
     public bool ReconnectClaude()
     {
         if (!_settings.ClaudeIntegrationEnabled || !_server.IsRunning || string.IsNullOrWhiteSpace(_settings.HookToken)) return false;
+        if (!MayTouchClaudeSettings(Environment.GetEnvironmentVariable("NOWBAR_DATA_DIR"), Environment.GetEnvironmentVariable("CLAUDE_CONFIG_DIR")))
+        {
+            Logger.Info("별도 데이터 폴더로 실행한 NowBar라 실제 Claude Code 설정은 자동으로 고치지 않음");
+            return false;
+        }
         try
         {
             var plan = _setup.BuildReconnectPlan(ClaudeHookServer.BuildUrl(_settings.HookPort), _settings.HookToken);
