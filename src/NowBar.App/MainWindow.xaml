@@ -265,6 +265,67 @@
             </StackPanel>
           </Grid>
         </Grid>
+
+        <!-- ── 빠른 질문: 단축키를 누르면 캡슐이 입력창으로 바뀌고, 답은 그 아래로 펼쳐진다 ── -->
+        <Grid x:Name="AskHost" Grid.RowSpan="2" VerticalAlignment="Top" Visibility="Collapsed" DataContext="{Binding Ask}">
+          <StackPanel x:Name="AskContent">
+            <Grid x:Name="AskInputRow" Margin="16,0,10,0">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <c:Icon Kind="Sparkles" Width="17" Height="17" Foreground="{DynamicResource Brush.Accent}" VerticalAlignment="Center"/>
+              <Grid Grid.Column="1" Margin="8,0">
+                <TextBox x:Name="AskBox" Style="{StaticResource Input.Text}" Background="Transparent" BorderThickness="0" Padding="2,0"
+                         FontSize="14" Text="{Binding Question, UpdateSourceTrigger=PropertyChanged}"
+                         AutomationProperties.Name="Claude에게 질문" PreviewKeyDown="AskBox_PreviewKeyDown"/>
+                <TextBlock Text="Claude에게 물어보기…   Enter 보내기 · Esc 닫기" FontSize="13" Margin="4,0,0,0" IsHitTestVisible="False">
+                  <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.Sub}">
+                      <Setter Property="Visibility" Value="Collapsed"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Question}" Value="">
+                          <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </TextBlock.Style>
+                </TextBlock>
+              </Grid>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="{Binding StatusText}" Style="{StaticResource Text.Sub}" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource Button.Icon}" Width="26" Height="26" Command="{Binding StopCommand}"
+                        ToolTip="멈추기" AutomationProperties.Name="멈추기"
+                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
+                  <c:Icon Kind="X" Width="13" Height="13" Foreground="{DynamicResource Brush.SubText}"/>
+                </Button>
+              </StackPanel>
+            </Grid>
+
+            <!-- 결과: 생각 중 / 답 / 오류 -->
+            <Border BorderBrush="{DynamicResource Brush.Divider}" BorderThickness="0,1,0,0"
+                    Visibility="{Binding ShowResult, Converter={StaticResource BoolToVis}}">
+              <StackPanel Margin="18,10,14,10">
+                <ScrollViewer x:Name="AskScroll" MaxHeight="300" VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+                  <TextBlock x:Name="AskAnswerText" Style="{StaticResource Text.Base}" TextWrapping="Wrap" TextTrimming="None"
+                             LineHeight="20" VerticalAlignment="Top"/>
+                </ScrollViewer>
+                <TextBlock Text="{Binding Error}" Style="{StaticResource Text.Sub}" Foreground="{DynamicResource Brush.Warning}"
+                           TextWrapping="Wrap" TextTrimming="None" Margin="0,4,0,0"
+                           Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}"/>
+                <DockPanel Margin="0,8,0,0">
+                  <Button DockPanel.Dock="Right" Style="{StaticResource Button.Icon}" Width="26" Height="26" Command="{Binding CopyAnswerCommand}"
+                          ToolTip="답 복사" AutomationProperties.Name="답 복사"
+                          Visibility="{Binding HasAnswer, Converter={StaticResource BoolToVis}}">
+                    <c:Icon Kind="Clipboard" Width="14" Height="14" Foreground="{DynamicResource Brush.SubText}"/>
+                  </Button>
+                  <TextBlock Text="Claude Code · Enter 새 질문 · Esc 닫기" Style="{StaticResource Text.Caption}" VerticalAlignment="Center"/>
+                </DockPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Grid>
       </Grid>
     </Border>
 

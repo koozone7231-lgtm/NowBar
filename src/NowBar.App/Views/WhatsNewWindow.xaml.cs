@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -104,22 +103,8 @@ public partial class WhatsNewWindow : Window
         }
     }
 
-    private static readonly Regex InlineToken = new(@"\*\*(.+?)\*\*|`([^`]+)`|\[([^\]]+)\]\([^)]+\)", RegexOptions.Compiled);
-
     /// <summary>**굵게**, `코드`, [링크](주소) 정도만 처리한 짧은 마크다운.</summary>
-    public static IEnumerable<Inline> FormatInline(string text)
-    {
-        var last = 0;
-        foreach (Match m in InlineToken.Matches(text))
-        {
-            if (m.Index > last) yield return new Run(text[last..m.Index]);
-            if (m.Groups[1].Success) yield return new Bold(new Run(m.Groups[1].Value));
-            else if (m.Groups[2].Success) yield return new Run(m.Groups[2].Value) { FontFamily = new FontFamily("Consolas") };
-            else yield return new Run(m.Groups[3].Value);
-            last = m.Index + m.Length;
-        }
-        if (last < text.Length) yield return new Run(text[last..]);
-    }
+    public static IEnumerable<Inline> FormatInline(string text) => MarkdownLite.FormatInline(text);
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 

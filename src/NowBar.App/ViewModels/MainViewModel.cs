@@ -14,6 +14,9 @@ public partial class MainViewModel : ObservableObject
     private readonly SettingsService _settingsService;
 
     public AppSettings Settings { get; }
+
+    /// <summary>단축키로 여는 빠른 질문 (Claude Code). 창을 만들기 전에 App이 넣어 둔다.</summary>
+    public AskViewModel Ask { get; set; } = null!;
     public WeatherViewModel Weather { get; }
     public MusicViewModel Music { get; }
     public AIActivityViewModel AI { get; }

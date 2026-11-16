@@ -60,6 +60,13 @@ public partial class MainWindow : Window
 
         // 설정이 열린 채로 NowBar 바깥(다른 창·바탕 화면)을 누르면 설정을 닫고 접는다
         Deactivated += (_, _) => Dispatcher.BeginInvoke(CloseSettingsOnOutsideClick, DispatcherPriority.Background);
+        Deactivated += (_, _) => Dispatcher.BeginInvoke(CloseAskOnOutsideClick, DispatcherPriority.Background);
+
+        // 빠른 질문: 답이 흘러 들어오는 동안 캡슐 높이를 자주 맞추되, 너무 자주 다시 그리지 않게 묶는다
+        _askLayoutTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(60) };
+        _askLayoutTimer.Tick += (_, _) => { _askLayoutTimer.Stop(); UpdateAskLayout(animate: true); };
+        _vm.Ask.PropertyChanged += OnAskChanged;
+        _vm.Ask.LayoutChanged += (_, _) => { if (!_askLayoutTimer.IsEnabled) _askLayoutTimer.Start(); };
 
         _vm.PropertyChanged += OnViewModelChanged;
         _vm.AI.PropertyChanged += OnAIChanged;
@@ -113,6 +120,139 @@ public partial class MainWindow : Window
 
         AnimateIsland(_vm.IsExpanded, animate ? _settings.AnimationMs : 1);
         if (_tucked) AnimationHelper.Animate(TuckShift, TranslateTransform.YProperty, -TuckDistance, 1);
+    }
+
+    // ── 빠른 질문 ────────────────────────────────────────
+    private readonly DispatcherTimer _askLayoutTimer;
+
+    /// <summary>전역 단축키: 캡슐을 입력창으로 바꾸고 키보드 입력을 받는다.</summary>
+    public void OpenAsk()
+    {
+        if (_userHidden) UserHidden = false;
+        if (_vm.Ask.IsOpen)
+        {
+            ActivateForTyping();
+            return;
+        }
+        _vm.Ask.Open();
+    }
+
+    private double AskWidth => Math.Max(_settings.ExpandedWidth, 480);
+
+    private void OnAskChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(AskViewModel.IsOpen):
+                if (_vm.Ask.IsOpen) ShowAsk();
+                else HideAsk();
+                break;
+            case nameof(AskViewModel.Answer):
+            case nameof(AskViewModel.IsBusy):
+                RenderAnswer();
+                if (e.PropertyName == nameof(AskViewModel.IsBusy) && !_vm.Ask.IsBusy && _vm.Ask.IsOpen)
+                {
+                    // 답이 끝나면 질문을 선택해 두어, 바로 새 질문을 입력할 수 있게
+                    AskBox.SelectAll();
+                    FocusAskBox();
+                }
+                break;
+        }
+    }
+
+    private void ShowAsk()
+    {
+        if (_tucked) Untuck(animate: true);
+        _collapseTimer.Stop();
+        if (_vm.IsExpanded) _vm.IsExpanded = false;
+        _vm.IsPinned = false;
+
+        CompactPill.Visibility = Visibility.Hidden;
+        CompactPill.IsHitTestVisible = false;
+        SetExpandedPartsVisible(false);
+        AskHost.Visibility = Visibility.Visible;
+        AskHost.Opacity = 0;
+        AnimationHelper.Animate(AskHost, OpacityProperty, 1, _settings.AnimationMs);
+        RenderAnswer();
+        UpdateAskLayout(animate: true);
+        ActivateForTyping();
+    }
+
+    /// <summary>단축키를 받은 프로그램은 앞으로 나올 수 있다 → 바로 입력할 수 있게 포커스를 가져온다.</summary>
+    private void ActivateForTyping()
+    {
+        Activate();
+        if (_hwnd != IntPtr.Zero) NativeMethods.SetForegroundWindow(_hwnd);
+        FocusAskBox();
+    }
+
+    private void HideAsk()
+    {
+        _askLayoutTimer.Stop();
+        AskHost.Visibility = Visibility.Collapsed;
+        AskAnswerText.Inlines.Clear();
+        AnimateIsland(_vm.IsExpanded, _settings.AnimationMs);
+        if (_settings.HiddenMode) StartRetuckWatch();
+    }
+
+    private void FocusAskBox()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            AskBox.Focus();
+            Keyboard.Focus(AskBox);
+        }, DispatcherPriority.Input);
+    }
+
+    /// <summary>입력창 한 줄(캡슐 높이) + 결과 영역 높이에 캡슐 크기를 맞춘다.</summary>
+    private void UpdateAskLayout(bool animate)
+    {
+        if (!_vm.Ask.IsOpen) return;
+        var width = AskWidth;
+        AskInputRow.Height = _settings.CapsuleHeight - 2;
+        AskContent.Width = width - 2;
+        AskContent.Measure(new Size(width - 2, double.PositiveInfinity));
+        var height = Math.Max(_settings.CapsuleHeight, AskContent.DesiredSize.Height + 2);
+        var radius = _vm.Ask.ShowResult ? _settings.CornerRadius : Math.Min(_settings.CornerRadius, _settings.CapsuleHeight / 2);
+        Island.CornerRadius = new CornerRadius(radius);
+        var ms = animate ? _settings.AnimationMs : 1;
+        AnimationHelper.Animate(Island, WidthProperty, width, ms);
+        AnimationHelper.Animate(Island, HeightProperty, height, ms);
+    }
+
+    private void RenderAnswer()
+    {
+        var ask = _vm.Ask;
+        AskAnswerText.Inlines.Clear();
+        if (ask.HasAnswer)
+        {
+            AskAnswerText.Inlines.AddRange(MarkdownLite.ToInlines(ask.Answer));
+            AskAnswerText.Foreground = (System.Windows.Media.Brush)FindResource("Brush.Text");
+            if (ask.IsBusy) AskScroll.ScrollToEnd();
+        }
+        else if (ask.IsBusy)
+        {
+            AskAnswerText.Inlines.Add(new System.Windows.Documents.Run("Claude가 생각하고 있어요..."));
+            AskAnswerText.Foreground = (System.Windows.Media.Brush)FindResource("Brush.SubText");
+        }
+    }
+
+    private void AskBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
+        {
+            if (_vm.Ask.SubmitCommand.CanExecute(null)) _vm.Ask.SubmitCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>질문 창이 열린 채 바깥을 누르면 닫는다 (답을 기다리는 중이면 그대로 둔다).</summary>
+    private void CloseAskOnOutsideClick()
+    {
+        if (!_vm.Ask.IsOpen || _vm.Ask.IsBusy || IsActive) return;
+        NativeMethods.GetWindowThreadProcessId(NativeMethods.GetForegroundWindow(), out var pid);
+        if (pid == Environment.ProcessId) return;
+        _vm.Ask.Close();
     }
 
     // ── 숨김 모드 ────────────────────────────────────────
@@ -180,7 +320,7 @@ public partial class MainWindow : Window
             _retuckTimer.Stop();
             return;
         }
-        if (_vm.IsExpanded || _vm.IsPinned || _vm.IsSettingsOpen || Mouse.Captured is not null
+        if (_vm.IsExpanded || _vm.IsPinned || _vm.IsSettingsOpen || _vm.Ask.IsOpen || Mouse.Captured is not null
             || Island.ContextMenu?.IsOpen == true || IsCursorOverIsland())
         {
             _awayTicks = 0;
@@ -324,6 +464,7 @@ public partial class MainWindow : Window
     private void Island_MouseEnter(object sender, MouseEventArgs e)
     {
         _collapseTimer.Stop(); // 축소 대기 중 다시 들어오면 취소
+        if (_vm.Ask.IsOpen) return; // 질문 중에는 패널을 펼치지 않는다
         if (_settings.AutoExpand) _vm.IsExpanded = true;
     }
 
@@ -428,6 +569,14 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Escape && _vm.Ask.IsOpen)
+        {
+            // 답을 기다리는 중이면 멈추고, 아니면 닫는다
+            if (_vm.Ask.IsBusy) _vm.Ask.StopCommand.Execute(null);
+            else _vm.Ask.Close();
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Escape)
         {
             // 설정이 열려 있으면 설정만 닫고(저장 확인 포함), 아니면 고정 해제 + 축소
@@ -449,6 +598,7 @@ public partial class MainWindow : Window
             case nameof(MainViewModel.IsExpanded):
                 // 트레이·두 번째 실행 등으로 펼치면 숨김 모드에서도 내려온다
                 if (_vm.IsExpanded && _tucked) Untuck(animate: true);
+                if (_vm.IsExpanded && _vm.Ask.IsOpen) _vm.Ask.Close();
                 AnimateIsland(_vm.IsExpanded, _settings.AnimationMs);
                 if (_vm.IsExpanded)
                 {
@@ -524,7 +674,7 @@ public partial class MainWindow : Window
     {
         if (_hwnd == IntPtr.Zero) return;
 
-        var fullscreen = _settings.HideInFullscreen && !_vm.IsPinned && !_vm.IsSettingsOpen
+        var fullscreen = _settings.HideInFullscreen && !_vm.IsPinned && !_vm.IsSettingsOpen && !_vm.Ask.IsOpen
             ? FullscreenDetector.Check(_hwnd)
             : default;
         if (fullscreen.IsFullscreen != _hiddenForFullscreen)
@@ -594,6 +744,8 @@ public partial class MainWindow : Window
         _hoverWatchdog.Stop();
         _housekeeping.Stop();
         _retuckTimer.Stop();
+        _askLayoutTimer.Stop();
+        _vm.Ask.PropertyChanged -= OnAskChanged;
         _vm.PropertyChanged -= OnViewModelChanged;
         _vm.AI.PropertyChanged -= OnAIChanged;
         _settings.PropertyChanged -= OnSettingsChanged;

@@ -111,7 +111,10 @@ public partial class App : Application
             var ai = new AIActivityViewModel(_hookServer, _hooksSetup, settings, () => OpenSettings(SettingsSection.AI));
             var update = new UpdateViewModel(new UpdateService(), settings);
             var settingsPanel = new SettingsViewModel(_settingsService, ai, _weatherService, _hookServer, _hooksSetup, _startupService, update);
-            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status, tools);
+            _main = new MainViewModel(_settingsService, weather, music, ai, settingsPanel, status, tools)
+            {
+                Ask = new AskViewModel(new ClaudeAskService()),
+            };
             status.Start();
             systemMonitor.Start();
             tools.Clipboard.ApplyEnabled();
@@ -136,6 +139,10 @@ public partial class App : Application
             update.Start();
             if (afterUpdate)
                 _tray.ShowNotice("NowBar 업데이트 완료", $"v{UpdateService.CurrentVersion.ToString(3)}으로 업데이트했습니다.");
+            _hotkey = new HotkeyService();
+            _hotkey.Pressed += (_, _) => _window?.OpenAsk();
+            ApplyQuickAskHotkey(settings, announceFailure: true);
+
             ShowWhatsNew(settings, afterUpdate, force: e.Args.Any(a => a.Equals("--whats-new", StringComparison.OrdinalIgnoreCase)));
 
             await Task.WhenAll(
@@ -175,6 +182,23 @@ public partial class App : Application
                     break;
             }
         }
+    }
+
+    private HotkeyService? _hotkey;
+
+    /// <summary>빠른 질문 단축키 등록/해제. 다른 프로그램이 이미 쓰고 있으면 알린다.</summary>
+    private void ApplyQuickAskHotkey(AppSettings settings, bool announceFailure)
+    {
+        if (_hotkey is null) return;
+        if (!settings.QuickAskEnabled)
+        {
+            _hotkey.Unregister();
+            return;
+        }
+        const uint modifiers = HotkeyService.MOD_CONTROL | HotkeyService.MOD_ALT;
+        if (!_hotkey.Register(modifiers, HotkeyService.VK_SPACE) && announceFailure)
+            _tray?.ShowNotice("빠른 질문 단축키를 쓸 수 없어요",
+                $"{HotkeyService.Describe(modifiers, HotkeyService.VK_SPACE)}를 다른 프로그램이 이미 쓰고 있습니다.");
     }
 
     /// <summary>업데이트 뒤 처음 실행이면 "새로 바뀐 점" 팝업을 캡슐 아래에 띄운다 (한 번만).</summary>
@@ -313,6 +337,7 @@ public partial class App : Application
             _clipboard?.Dispose();
             _main?.Status.Dispose();
             _systemStatus?.Dispose();
+            _hotkey?.Dispose();
             _audioMixer?.Dispose();
             _window?.Close();
             _main?.Weather.Dispose();
@@ -348,6 +373,9 @@ public partial class App : Application
         if (sender is not AppSettings s) return;
         switch (e.PropertyName)
         {
+            case nameof(AppSettings.QuickAskEnabled):
+                ApplyQuickAskHotkey(s, announceFailure: true);
+                break;
             case nameof(AppSettings.Theme):
             case nameof(AppSettings.BackgroundOpacity):
             case nameof(AppSettings.AccentColor):
